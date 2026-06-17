@@ -1,0 +1,22 @@
+# Xcode user-specific files (avoid cross-user conflicts)
+**/xcuserdata/
+**/*.xcuserstate
+
+# Xcode workspace and user state
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+*.pbxproj
+.xcodeproj/
+.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+
+# Build artifacts and local caches
+DerivedData/
+build/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# macOS
+.DS_Store
