@@ -3,21 +3,18 @@
 Aplikasi iOS berbasis SwiftUI untuk mengambil atau memilih foto layar tensimeter digital, membaca nilai **systolic**, **diastolic**, dan **pulse** menggunakan FastVLM secara on-device, lalu memasukkan hasilnya ke form pencatatan tekanan darah.
 
 > [!IMPORTANT]
-> Aplikasi ini merupakan implementasi pembacaan tampilan perangkat dan bukan alat diagnosis medis. Hasil inference harus tetap dapat diperiksa dan dikoreksi oleh pengguna sebelum disimpan.
+> Aplikasi ini membaca tampilan perangkat dan bukan alat diagnosis medis. Hasil inference harus tetap dapat diperiksa dan dikoreksi oleh pengguna sebelum disimpan.
 
 ## Fitur
 
-- Mengambil foto menggunakan kamera atau memilih gambar dari galeri.
-- Memeriksa apakah gambar merupakan tensimeter digital.
-- Memeriksa apakah tampilan cukup jelas untuk dibaca.
-- Membaca:
-  - systolic blood pressure;
-  - diastolic blood pressure;
-  - pulse rate.
-- Mengembalikan hasil inference dalam JSON terstruktur.
-- Mengisi form pencatatan tekanan darah secara otomatis.
-- Inference dilakukan secara lokal pada perangkat menggunakan MLX dan FastVLM.
-- Tidak memerlukan Apple Foundation Models atau koneksi ke layanan inference eksternal.
+* Mengambil foto menggunakan kamera atau memilih gambar dari galeri.
+* Memeriksa apakah gambar merupakan tensimeter digital.
+* Memeriksa apakah tampilan cukup jelas untuk dibaca.
+* Membaca nilai systolic, diastolic, dan pulse.
+* Mengembalikan hasil inference dalam format JSON terstruktur.
+* Mengisi form pencatatan tekanan darah secara otomatis.
+* Menjalankan inference secara lokal menggunakan MLX dan FastVLM.
+* Tidak menggunakan Apple Foundation Models atau layanan inference eksternal.
 
 ## Alur Pemrosesan
 
@@ -63,39 +60,38 @@ Ketika suatu nilai tidak dapat dibaca dengan yakin, model harus mengembalikan `0
 
 ## Persyaratan
 
-- macOS dengan Apple Silicon direkomendasikan.
-- Xcode yang mendukung iOS 18.2 atau lebih baru.
-- Deployment target: **iOS 18.2**.
-- Swift language version pada project: **Swift 5**.
-- Perangkat iPhone atau iPad fisik direkomendasikan.
-- Ruang penyimpanan yang cukup untuk model FastVLM.
-- Git dan Git LFS tidak diperlukan selama model tidak dimasukkan ke repository.
+* macOS dengan Apple Silicon direkomendasikan.
+* Xcode yang mendukung iOS 18.2 atau lebih baru.
+* Deployment target: **iOS 18.2**.
+* Swift language version: **Swift 5**.
+* Perangkat iPhone atau iPad fisik direkomendasikan.
+* Ruang penyimpanan yang cukup untuk model FastVLM.
 
-FastVLM menggunakan Metal melalui MLX. Menjalankan aplikasi pada perangkat fisik lebih representatif dibandingkan simulator, terutama untuk penggunaan memori dan performa inference.
+FastVLM menggunakan Metal melalui MLX. Pengujian pada perangkat fisik lebih representatif daripada simulator untuk penggunaan memory dan performa inference.
 
-## Dependency yang Digunakan
+## Dependency
 
-Project menggunakan Swift Package Manager.
+Project menggunakan Swift Package Manager dengan versi exact berikut:
 
-| Repository | Version rule | Minimum version | Products yang digunakan |
-|---|---:|---:|---|
-| `https://github.com/ml-explore/mlx-swift` | Up to Next Major | `0.21.2` | `MLX`, `MLXNN`, `MLXFast`, `MLXRandom` |
-| `https://github.com/ml-explore/mlx-swift-examples` | Up to Next Major | `2.21.2` | `MLXVLM`, `MLXLMCommon` |
-| `https://github.com/huggingface/swift-transformers` | Up to Next Major | `0.1.18` | `Transformers` |
-
-Versi tersebut mengikuti kombinasi dependency yang digunakan oleh demo resmi FastVLM yang menjadi dasar integrasi project ini.
+| Repository                                          |  Version | Products                               |
+| --------------------------------------------------- | -------: | -------------------------------------- |
+| `https://github.com/ml-explore/mlx-swift`           | `0.21.2` | `MLX`, `MLXNN`, `MLXFast`              |
+| `https://github.com/ml-explore/mlx-swift-examples`  | `2.21.2` | `MLXVLM`, `MLXLMCommon`                |
+| `https://github.com/huggingface/swift-transformers` | `0.1.18` | `Transformers`                         |
 
 > [!WARNING]
-> Jangan mengganti seluruh package ke versi terbaru secara otomatis tanpa menguji ulang. Perubahan API MLX dan MLXVLM dapat menyebabkan error compile seperti perubahan tipe attention mask, perubahan `UserInput.Prompt`, atau perubahan argumen image grid.
+> Jangan memperbarui package MLX secara otomatis tanpa pengujian ulang. Versi package yang tidak kompatibel dapat menyebabkan error pada attention mask, `UserInput.Prompt`, atau argumen image grid.
 
 ## Struktur Project
-
-Struktur utama project kurang lebih sebagai berikut:
 
 ```text
 Blood Pressure/
 ├── Blood Pressure.xcodeproj/
 ├── Blood Pressure/
+│   ├── FastVLM/
+│   │   ├── FastVLM.swift
+│   │   ├── MediaProcessingExtensions.swift
+│   │   └── model/                         # lokal, tidak di-push
 │   ├── Models/
 │   │   └── OCRParsedResult.swift
 │   ├── Services/
@@ -104,18 +100,21 @@ Blood Pressure/
 │   │   └── AddReadingView.swift
 │   ├── Assets.xcassets/
 │   └── ...
-├── Vendor/
-│   └── ml-fastvlm/
 ├── .gitignore
 ├── Package.resolved
 └── README.md
 ```
 
-Folder `Vendor/ml-fastvlm` dan model tidak disimpan ke GitHub. Keduanya harus dibuat kembali setelah repository utama di-clone.
+Ketentuan Git:
 
-## Instalasi
+* `FastVLM.swift` di-commit.
+* `MediaProcessingExtensions.swift` di-commit.
+* Folder `FastVLM/model/` tidak di-commit karena ukurannya besar.
+* Repository resmi `ml-fastvlm` hanya digunakan sebagai sumber download sementara.
 
-### 1. Clone repository aplikasi
+# Instalasi
+
+## 1. Clone Repository Aplikasi
 
 ```bash
 git clone <URL_REPOSITORY_APLIKASI>
@@ -128,63 +127,160 @@ Buka project:
 open "Blood Pressure.xcodeproj"
 ```
 
-Nama file `.xcodeproj` dapat disesuaikan apabila nama project telah diubah.
+Sesuaikan nama file `.xcodeproj` apabila nama project berbeda.
 
-### 2. Clone repository FastVLM
+## 2. Clone Repository Resmi FastVLM
 
-Dari root project aplikasi:
+Clone repository FastVLM di luar folder project aplikasi. Contoh berikut menggunakan folder `Downloads`:
 
 ```bash
-mkdir -p Vendor
-git clone https://github.com/apple/ml-fastvlm.git Vendor/ml-fastvlm
+cd ~/Downloads
+git clone https://github.com/apple/ml-fastvlm.git
+cd ml-fastvlm
 ```
 
-Path akhirnya harus menjadi:
+Repository tersebut hanya digunakan sebagai sumber untuk mengambil source FastVLM dan model.
+
+## 3. Download Model FastVLM 0.5B
+
+Masih dari folder:
 
 ```text
-Vendor/ml-fastvlm/app/FastVLM
+~/Downloads/ml-fastvlm
 ```
-
-Project Xcode yang sudah dikonfigurasi akan menggunakan source FastVLM dari lokasi tersebut.
-
-Apabila Xcode menampilkan file FastVLM berwarna merah, periksa bahwa folder hasil clone benar-benar berada pada path relatif yang sama.
-
-### 3. Download model FastVLM 0.5B
 
 Berikan permission executable pada script:
 
 ```bash
-chmod +x Vendor/ml-fastvlm/app/get_pretrained_mlx_model.sh
+chmod +x app/get_pretrained_mlx_model.sh
 ```
 
 Download model:
 
 ```bash
-Vendor/ml-fastvlm/app/get_pretrained_mlx_model.sh \
+./app/get_pretrained_mlx_model.sh \
   --model 0.5b \
-  --dest Vendor/ml-fastvlm/app/FastVLM/model
+  --dest app/FastVLM/model
 ```
 
-Setelah selesai, struktur berikut harus tersedia:
+Setelah selesai, model tersedia di:
 
 ```text
-Vendor/ml-fastvlm/app/FastVLM/model/
+~/Downloads/ml-fastvlm/app/FastVLM/model/
 ```
 
-Model `0.5b` dipilih karena lebih sesuai untuk penggunaan mobile dibandingkan varian 1.5B atau 7B.
+Model `0.5b` dipilih karena lebih sesuai untuk penggunaan pada perangkat mobile dibandingkan varian yang lebih besar.
 
-Model tidak dimasukkan ke GitHub karena ukurannya besar dan memiliki ketentuan lisensi tersendiri.
+## 4. Memindahkan FastVLM ke Project Aplikasi
 
-### 4. Tambahkan Swift Package Dependencies
+### Integrasi Pertama Kali
+
+Langkah ini hanya diperlukan ketika pertama kali memasukkan FastVLM ke project.
+
+Buat folder FastVLM di dalam target aplikasi:
+
+```bash
+mkdir -p "/PATH/KE/PROJECT/Blood Pressure/FastVLM"
+```
+
+Salin source FastVLM:
+
+```bash
+cp ~/Downloads/ml-fastvlm/app/FastVLM/FastVLM.swift \
+  "/PATH/KE/PROJECT/Blood Pressure/FastVLM/"
+
+cp ~/Downloads/ml-fastvlm/app/FastVLM/MediaProcessingExtensions.swift \
+  "/PATH/KE/PROJECT/Blood Pressure/FastVLM/"
+```
+
+Salin model:
+
+```bash
+cp -R ~/Downloads/ml-fastvlm/app/FastVLM/model \
+  "/PATH/KE/PROJECT/Blood Pressure/FastVLM/"
+```
+
+Hasil akhirnya:
+
+```text
+Blood Pressure/
+└── Blood Pressure/
+    └── FastVLM/
+        ├── FastVLM.swift
+        ├── MediaProcessingExtensions.swift
+        └── model/
+```
+
+File `FastVLM.h` tidak diperlukan karena source FastVLM dikompilasi langsung ke target aplikasi Swift.
+
+### Setelah Clone Repository Aplikasi
+
+Pada repository ini, file berikut sudah di-commit:
+
+```text
+FastVLM/FastVLM.swift
+FastVLM/MediaProcessingExtensions.swift
+```
+
+Developer yang baru melakukan clone hanya perlu menyalin folder model:
+
+```bash
+mkdir -p "/PATH/KE/PROJECT/Blood Pressure/FastVLM"
+
+rm -rf "/PATH/KE/PROJECT/Blood Pressure/FastVLM/model"
+
+cp -R ~/Downloads/ml-fastvlm/app/FastVLM/model \
+  "/PATH/KE/PROJECT/Blood Pressure/FastVLM/"
+```
+
+Ganti `/PATH/KE/PROJECT` dengan lokasi project pada komputer Anda.
+
+Contoh:
+
+```bash
+cp -R ~/Downloads/ml-fastvlm/app/FastVLM/model \
+  "/Users/username/Documents/Blood Pressure/Blood Pressure/FastVLM/"
+```
+
+## 5. Tambahkan FastVLM ke Xcode
+
+Apabila file belum muncul di Project Navigator:
+
+1. Klik kanan group utama **Blood Pressure**.
+2. Pilih **Add Files to "Blood Pressure"...**.
+3. Tambahkan:
+
+   * `FastVLM.swift`
+   * `MediaProcessingExtensions.swift`
+   * folder `model`
+4. Aktifkan target membership untuk target aplikasi.
+5. Pastikan struktur folder model tetap dipertahankan.
+
+Periksa Build Phases:
+
+```text
+Target
+└── Build Phases
+    ├── Compile Sources
+    │   ├── FastVLM.swift
+    │   ├── MediaProcessingExtensions.swift
+    │   └── FastVLMBloodPressureService.swift
+    └── Copy Bundle Resources
+        └── model
+```
+
+Jangan menambahkan file yang sama lebih dari satu kali karena dapat menyebabkan duplicate build command atau duplicate symbol.
+
+## 6. Tambahkan Swift Package Dependencies
 
 Di Xcode:
 
 1. Pilih project pada Project Navigator.
-2. Pilih tab **Package Dependencies**.
+2. Buka tab **Package Dependencies**.
 3. Tekan tombol **+**.
-4. Tambahkan package berikut satu per satu.
+4. Tambahkan package berikut.
 
-#### MLX Swift
+### MLX Swift
 
 Repository:
 
@@ -192,14 +288,13 @@ Repository:
 https://github.com/ml-explore/mlx-swift
 ```
 
-Dependency Rule:
+Dependency rule:
 
 ```text
-Up to Next Major Version
-Minimum: 0.21.2
+Exact Version: 0.21.2
 ```
 
-Tambahkan products berikut ke target yang menggunakan FastVLM:
+Products:
 
 ```text
 MLX
@@ -208,7 +303,7 @@ MLXFast
 MLXRandom
 ```
 
-#### MLX Swift Examples
+### MLX Swift Examples
 
 Repository:
 
@@ -216,21 +311,20 @@ Repository:
 https://github.com/ml-explore/mlx-swift-examples
 ```
 
-Dependency Rule:
+Dependency rule:
 
 ```text
-Up to Next Major Version
-Minimum: 2.21.2
+Exact Version: 2.21.2
 ```
 
-Tambahkan products:
+Products:
 
 ```text
 MLXVLM
 MLXLMCommon
 ```
 
-#### Swift Transformers
+### Swift Transformers
 
 Repository:
 
@@ -238,52 +332,21 @@ Repository:
 https://github.com/huggingface/swift-transformers
 ```
 
-Dependency Rule:
+Dependency rule:
 
 ```text
-Up to Next Major Version
-Minimum: 0.1.18
+Exact Version: 0.1.18
 ```
 
-Tambahkan product:
+Product:
 
 ```text
 Transformers
 ```
 
-Setelah package selesai di-resolve, pastikan file `Package.resolved` ikut di-commit. File tersebut mengunci versi dependency aktual yang sudah terbukti dapat di-build pada project.
+Setelah package selesai di-resolve, commit `Package.resolved` agar developer lain menggunakan versi dependency yang sama.
 
-### 5. Periksa Target Membership
-
-Pilih source FastVLM dan service yang digunakan aplikasi, lalu buka File Inspector.
-
-Pastikan file yang diperlukan memiliki Target Membership pada target aplikasi atau framework yang sesuai.
-
-Source utama yang harus tersedia mencakup implementasi FastVLM dan file berikut pada aplikasi:
-
-```text
-Blood Pressure/Services/FastVLMBloodPressureService.swift
-```
-
-Service tersebut menggunakan module berikut:
-
-```swift
-import MLX
-import MLXLMCommon
-import MLXRandom
-import MLXVLM
-import UIKit
-```
-
-FastVLM dimuat melalui:
-
-```swift
-VLMModelFactory.shared.loadContainer(
-    configuration: FastVLM.modelConfiguration
-)
-```
-
-### 6. Atur Deployment Target
+## 7. Atur Deployment Target
 
 Di Xcode:
 
@@ -296,13 +359,11 @@ Project
                 └── iOS 18.2
 ```
 
-Lakukan pemeriksaan yang sama pada target framework FastVLM apabila framework tersebut dipisahkan dari target aplikasi.
+Pastikan deployment target project dan target aplikasi konsisten.
 
-Nilai deployment target target aplikasi dan framework sebaiknya konsisten untuk mencegah error linking.
+## 8. Tambahkan Camera Permission
 
-### 7. Tambahkan Camera Permission
-
-Pada target aplikasi, buka tab **Info** dan tambahkan:
+Pada target aplikasi, buka tab **Info** lalu tambahkan:
 
 ```text
 Privacy - Camera Usage Description
@@ -314,14 +375,14 @@ Contoh value:
 Kamera digunakan untuk mengambil foto tampilan tensimeter.
 ```
 
-Apabila project menggunakan `Info.plist` manual, key yang digunakan adalah:
+Untuk `Info.plist` manual:
 
 ```xml
 <key>NSCameraUsageDescription</key>
 <string>Kamera digunakan untuk mengambil foto tampilan tensimeter.</string>
 ```
 
-### 8. Pilih Signing Team
+## 9. Atur Signing
 
 Di Xcode:
 
@@ -333,13 +394,7 @@ Target
     └── Bundle Identifier: identifier unik
 ```
 
-Contoh bundle identifier:
-
-```text
-com.example.BloodPressure
-```
-
-### 9. Resolve Package
+## 10. Resolve Package Versions
 
 Gunakan menu:
 
@@ -359,16 +414,9 @@ File
 
 Kemudian resolve kembali package versions.
 
-### 10. Build dan Jalankan
+## 11. Build dan Jalankan
 
-Pilih perangkat iPhone fisik, kemudian:
-
-```text
-Product
-└── Build
-```
-
-atau tekan:
+Pilih perangkat iPhone fisik, lalu build:
 
 ```text
 Command + B
@@ -380,11 +428,11 @@ Jalankan aplikasi:
 Command + R
 ```
 
-Inference pertama dapat terasa lebih lambat karena model perlu dimuat ke memory. Instance `ModelContainer` kemudian disimpan oleh service agar tidak dimuat ulang untuk setiap foto.
+Inference pertama dapat lebih lambat karena model harus dimuat ke memory. `ModelContainer` disimpan oleh service agar tidak dimuat ulang untuk setiap foto.
 
-## Konfigurasi Inference
+# Konfigurasi Inference
 
-Implementasi saat ini menggunakan pengaturan deterministik:
+Implementasi saat ini menggunakan:
 
 ```swift
 let parameters = GenerateParameters(temperature: 0.0)
@@ -399,13 +447,23 @@ Sebelum dikirim ke model, gambar:
 3. di-resize menjadi 640 × 480;
 4. dikirim sebagai `CIImage` melalui `UserInput`.
 
-Pengaturan tersebut dibuat agar input aplikasi konsisten dengan pipeline demo FastVLM.
+Model dimuat menggunakan:
+
+```swift
+VLMModelFactory.shared.loadContainer(
+    configuration: FastVLM.modelConfiguration
+)
+```
+
+`FastVLM.modelConfiguration` mencari `config.json` dari resource bundle yang sama dengan class `FastVLM`. Karena itu, seluruh isi folder `model` harus tersedia di bundle aplikasi.
 
 ## Prompt Pembacaan Tensimeter
 
-Prompt harus memperlakukan gambar sebagai satu-satunya sumber kebenaran dan tidak boleh menggunakan nilai tekanan darah yang dianggap normal atau umum sebagai tebakan.
+Prompt memperlakukan gambar sebagai satu-satunya sumber kebenaran dan tidak boleh menggunakan nilai tekanan darah normal atau umum sebagai tebakan.
 
-Field JSON yang digunakan harus tetap sama:
+Output harus mengikuti struktur JSON pada bagian **Alur Pemrosesan**.
+
+Nama field berikut tidak boleh diubah tanpa memperbarui parser dan `OCRParsedResult`:
 
 ```text
 is_blood_pressure_monitor
@@ -415,104 +473,93 @@ diastolic
 pulse
 ```
 
-Perubahan nama field harus diikuti dengan perubahan pada parser dan model `OCRParsedResult`.
+# Git Setup
 
-## File yang Harus Di-commit
-
-File berikut harus tetap dimasukkan ke Git:
+File yang harus di-commit:
 
 ```text
 Blood Pressure.xcodeproj/project.pbxproj
-Blood Pressure.xcworkspace/contents.xcworkspacedata
 Package.resolved
-Package.swift
-*.xcodeproj/xcshareddata/xcschemes/
-*.xcworkspace/xcshareddata/xcschemes/
-source code Swift
-Assets.xcassets
+Blood Pressure/FastVLM/FastVLM.swift
+Blood Pressure/FastVLM/MediaProcessingExtensions.swift
+Blood Pressure/Models/
+Blood Pressure/Services/
+Blood Pressure/Views/
+Blood Pressure/Assets.xcassets/
 README.md
 .gitignore
 ```
 
-Khususnya, jangan menambahkan pola berikut ke `.gitignore`:
-
-```gitignore
-*.pbxproj
-*.xcodeproj/
-*.xcworkspace/
-Package.resolved
-```
-
-Mengabaikan `project.pbxproj` akan menyebabkan perubahan file, target membership, build settings, dan package dependencies tidak ikut tersimpan di GitHub.
-
-## File yang Tidak Di-commit
-
-File berikut dibuat kembali secara lokal:
+File yang tidak di-commit:
 
 ```text
 DerivedData/
 build/
 xcuserdata/
 .swiftpm/
-Vendor/ml-fastvlm/
-FastVLM model weights
-Hugging Face cache
-Python virtual environment
+Blood Pressure/FastVLM/model/
 Xcode archives
 provisioning profiles
 signing certificates
 local secrets
 ```
 
-Lihat `.gitignore` untuk daftar lengkap.
-
-## Troubleshooting
-
-### File `FastVLM.swift` berwarna merah
-
-Pastikan repository FastVLM berada di:
-
-```text
-Vendor/ml-fastvlm
-```
-
-dan bukan pada folder lain.
-
-### Model tidak ditemukan
-
-Pastikan folder berikut tersedia:
-
-```text
-Vendor/ml-fastvlm/app/FastVLM/model
-```
-
-Jalankan kembali:
+Periksa file sebelum commit:
 
 ```bash
-Vendor/ml-fastvlm/app/get_pretrained_mlx_model.sh \
-  --model 0.5b \
-  --dest Vendor/ml-fastvlm/app/FastVLM/model
+git status
 ```
 
-Setelah itu, clean build folder dan build ulang.
+Source FastVLM harus muncul sebagai tracked files, sedangkan folder `model` tidak boleh muncul.
 
-### Package product tidak ditemukan
+Commit perubahan:
 
-Periksa bahwa product berikut sudah ditambahkan ke target yang benar:
+```bash
+git add .
+git status
+git commit -m "Add FastVLM blood pressure reader"
+git push origin main
+```
+
+# Troubleshooting
+
+## FastVLM Tidak Ditemukan
+
+Pastikan file berikut ada dan memiliki target membership pada target aplikasi:
 
 ```text
-MLX
-MLXNN
-MLXFast
-MLXRandom
-MLXVLM
-MLXLMCommon
-Transformers
+Blood Pressure/FastVLM/FastVLM.swift
+Blood Pressure/FastVLM/MediaProcessingExtensions.swift
+Blood Pressure/Services/FastVLMBloodPressureService.swift
 ```
 
-### Error API MLX atau MLXVLM
+## Model Tidak Ditemukan
 
-Contoh error yang dapat muncul ketika package tidak kompatibel:
+Pastikan file berikut tersedia:
+
+```text
+Blood Pressure/FastVLM/model/config.json
+```
+
+Pastikan juga folder `model` terdapat pada:
+
+```text
+Target
+└── Build Phases
+    └── Copy Bundle Resources
+```
+
+Apabila model belum ada, ulangi langkah **Download Model FastVLM 0.5B** dan **Memindahkan FastVLM ke Project Aplikasi**.
+
+Setelah itu, lakukan Clean Build Folder dan build ulang.
+
+## Package Product Tidak Ditemukan
+
+Pastikan seluruh products pada bagian **Tambahkan Swift Package Dependencies** sudah ditambahkan ke target aplikasi.
+
+## Error API MLX atau MLXVLM
+
+Contoh error akibat versi package tidak kompatibel:
 
 ```text
 Cannot convert value of type
@@ -528,18 +575,22 @@ Value of type 'UserInput.Prompt' has no member 'asMessages'
 Extra argument 'imageGridThw' in call
 ```
 
-Solusi:
+Perbaikan:
 
-1. Periksa perubahan pada `Package.resolved`.
-2. Kembalikan dependency rule ke versi yang tercantum pada README ini.
+1. Periksa `Package.resolved`.
+2. Gunakan kembali versi exact yang tercantum pada README.
 3. Reset package cache.
 4. Resolve package versions.
 5. Clean Build Folder.
 6. Build ulang.
 
-Jangan memperbarui hanya satu package MLX tanpa memeriksa kompatibilitas package MLX lainnya.
+## Duplicate Build Command
 
-### Xcode memakai cache build lama
+Periksa apakah `FastVLM.swift`, `MediaProcessingExtensions.swift`, atau folder `model` ditambahkan lebih dari satu kali pada Build Phases.
+
+Hapus reference yang duplikat tanpa menghapus file fisik yang benar.
+
+## Cache Build Lama
 
 Pilih:
 
@@ -554,69 +605,35 @@ atau tekan:
 Shift + Command + K
 ```
 
-Apabila masih bermasalah, tutup Xcode dan hapus Derived Data untuk project tersebut.
+# Update FastVLM
 
-### Build berhasil tetapi inference gagal
-
-Periksa:
-
-- model sudah selesai di-download;
-- seluruh file model termasuk dalam resource yang dapat diakses aplikasi;
-- perangkat memiliki ruang penyimpanan dan memory yang cukup;
-- input gambar tidak kosong;
-- service tidak dijalankan bersamaan berkali-kali;
-- JSON response diperiksa sebelum dimasukkan ke form.
-
-## Git Setup
-
-Setelah menambahkan `.gitignore` dan `README.md`:
+Untuk memperbarui repository sumber:
 
 ```bash
-git status
+cd ~/Downloads/ml-fastvlm
+git pull
 ```
 
-Pastikan model dan folder `Vendor/ml-fastvlm` tidak muncul sebagai file yang akan di-commit.
+Bandingkan perubahan pada:
 
-Tambahkan file project:
-
-```bash
-git add .
-git status
+```text
+app/FastVLM/FastVLM.swift
+app/FastVLM/MediaProcessingExtensions.swift
 ```
 
-Commit:
+Jangan langsung menimpa source yang sudah berjalan tanpa menguji kompatibilitas package.
 
-```bash
-git commit -m "Add FastVLM blood pressure reader setup"
-```
+Setelah source diperbarui:
 
-Push:
+1. Build project.
+2. Jalankan pada perangkat fisik.
+3. Uji beberapa foto tensimeter.
+4. Periksa struktur JSON.
+5. Commit source dan `Package.resolved` setelah seluruh pengujian berhasil.
 
-```bash
-git push origin main
-```
+# Referensi
 
-## Update Dependency
-
-Sebelum memperbarui package:
-
-1. buat branch baru;
-2. catat versi pada `Package.resolved`;
-3. update package satu per satu;
-4. build pada device fisik;
-5. uji pembacaan beberapa foto tensimeter;
-6. periksa kembali JSON output;
-7. commit `Package.resolved` hanya setelah seluruh pengujian berhasil.
-
-## Referensi
-
-- FastVLM: `https://github.com/apple/ml-fastvlm`
-- MLX Swift: `https://github.com/ml-explore/mlx-swift`
-- MLX Swift Examples: `https://github.com/ml-explore/mlx-swift-examples`
-- Swift Transformers: `https://github.com/huggingface/swift-transformers`
-
-## License
-
-Source aplikasi harus menggunakan license milik repository aplikasi ini.
-
-FastVLM, model FastVLM, MLX, dan Swift Transformers masing-masing memiliki license sendiri. Tinjau file license dari setiap dependency sebelum mendistribusikan aplikasi atau mengunggahnya ke App Store.
+* FastVLM: `https://github.com/apple/ml-fastvlm`
+* MLX Swift: `https://github.com/ml-explore/mlx-swift`
+* MLX Swift Examples: `https://github.com/ml-explore/mlx-swift-examples`
+* Swift Transformers: `https://github.com/huggingface/swift-transformers`
