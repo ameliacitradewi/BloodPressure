@@ -1,22 +1,194 @@
-# Xcode user-specific files (avoid cross-user conflicts)
-**/xcuserdata/
-**/*.xcuserstate
+# ============================================================
+# Blood Pressure iOS
+# Xcode / Swift / FastVLM
+# ============================================================
 
-# Xcode workspace and user state
-*.xcworkspace/xcuserdata/
-*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
-*.pbxproj
-.xcodeproj/
-.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+# ------------------------------------------------------------
+# macOS
+# ------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
-# Build artifacts and local caches
+# ------------------------------------------------------------
+# Xcode build output
+# ------------------------------------------------------------
 DerivedData/
 build/
-
-# Swift Package Manager
+Build/
+Products/
 .build/
-.swiftpm/
-Package.resolved
+.xcodebuild/
+SourcePackages/
 
-# macOS
-.DS_Store
+*.xcarchive
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.resultbundle
+*.xccovarchive
+*.xccovreport
+
+# ------------------------------------------------------------
+# Xcode user-specific data
+#
+# Do not ignore:
+# - *.xcodeproj/project.pbxproj
+# - *.xcworkspace/contents.xcworkspacedata
+# - shared schemes
+# ------------------------------------------------------------
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Old Xcode per-user files
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+!default.mode1v3
+!default.mode2v3
+!default.perspectivev3
+
+# ------------------------------------------------------------
+# Swift Package Manager
+#
+# Package.resolved is intentionally NOT ignored. Commit it so
+# every developer resolves the same dependency versions.
+# ------------------------------------------------------------
+.swiftpm/
+Packages/
+Package.pins
+
+!Package.swift
+!Package.resolved
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/xcschemes/*.xcscheme
+!*.xcworkspace/contents.xcworkspacedata
+!*.xcworkspace/xcshareddata/xcschemes/*.xcscheme
+
+# ------------------------------------------------------------
+# FastVLM external repository
+#
+# The official FastVLM repository is cloned locally into Vendor.
+# Recreate it by following README.md instead of committing the
+# complete third-party repository.
+# ------------------------------------------------------------
+Vendor/ml-fastvlm/
+
+# ------------------------------------------------------------
+# FastVLM model weights and generated model files
+#
+# The model is large and must be downloaded separately.
+# Configuration/tokenizer files inside the downloaded model
+# folder are also recreated by the download script.
+# ------------------------------------------------------------
+**/FastVLM/model/
+**/fastvlm_*/model/
+checkpoints/
+models/downloaded/
+DownloadedModels/
+
+*.safetensors
+*.gguf
+*.npz
+*.bin
+*.pth
+*.pt
+*.ckpt
+*.onnx
+*.mlmodelc/
+
+# Keep source Core ML packages only when intentionally needed.
+# Uncomment the following lines if large Core ML source models
+# are added locally and should not be committed.
+# *.mlpackage/
+# *.mlmodel
+
+# ------------------------------------------------------------
+# Hugging Face / ML caches
+# ------------------------------------------------------------
+.cache/
+huggingface/
+.huggingface/
+hf_cache/
+
+# ------------------------------------------------------------
+# Python environments and generated files
+# Used only by optional FastVLM conversion/export tools.
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+
+.venv/
+venv/
+env/
+ENV/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ------------------------------------------------------------
+# Editors and IDEs
+# ------------------------------------------------------------
+.vscode/
+*.code-workspace
+.idea/
+*.swp
+*.swo
+*~
+
+# ------------------------------------------------------------
+# Local configuration and secrets
+# ------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+*.p12
+*.pfx
+*.cer
+*.mobileprovision
+*.provisionprofile
+*.pem
+*.key
+AuthKey_*.p8
+
+# Local-only configuration files
+Config.local.xcconfig
+Secrets.xcconfig
+GoogleService-Info.local.plist
+
+# ------------------------------------------------------------
+# Logs, temporary files, and local test output
+# ------------------------------------------------------------
+*.log
+logs/
+tmp/
+temp/
+.cache-loader/
+
+LocalData/
+LocalCaptures/
+DebugCaptures/
+InferenceOutput/
