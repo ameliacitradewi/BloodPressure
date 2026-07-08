@@ -197,7 +197,7 @@ struct AddReadingView2: View {
         )
     }
     
-    private var scanSection: some View {
+    private var scanSection: some View {        
         Group {
             Section("Scan from Image") {
                 Button {

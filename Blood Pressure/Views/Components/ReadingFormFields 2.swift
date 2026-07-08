@@ -77,11 +77,14 @@ struct ReadingFormFields2: View {
     }
     
     private var dateSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        HStack(spacing: 14) {
             Text("Date & Time")
-                .font(.system(size: 17, weight: .bold))
+                .font(.system(.headline, weight: .bold))
+//                .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
 
+            Spacer()
+            
             DatePicker(
                 "",
                 selection: $date,
@@ -315,7 +318,7 @@ private func positionOption(
                     isSelected
                     ? Color(red: 0.21, green: 0.34, blue: 0.56)
                     : Color.clear,
-                    lineWidth: 3
+                    lineWidth: 2
                 )
         )
     }
@@ -356,7 +359,7 @@ private func armOption(
                     isSelected
                     ? Color(red: 0.21, green: 0.34, blue: 0.56)
                     : Color.clear,
-                    lineWidth: 3
+                    lineWidth: 2
                 )
         )
     }
