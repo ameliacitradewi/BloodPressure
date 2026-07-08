@@ -86,7 +86,7 @@ struct HomeView2: View {
             return "\(timeGreeting)!"
         }
         
-        return "\(timeGreeting), \(userName) 👋"
+        return "\(timeGreeting), \(userName)!"
     }
     
     
@@ -134,7 +134,8 @@ struct HomeView2: View {
         if !readings.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Recent")
-                    .font(.system(size: 23, weight: .bold))
+                    .font(.system(.title3, weight: .bold))
+//                    .font(.system(size: 23, weight: .bold))
                     .foregroundStyle(HomePalette.primaryText)
                 
                 ForEach(Array(readings.prefix(5))) { reading in
@@ -166,11 +167,13 @@ struct HomeView2: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Reminders")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(.headline, weight: .semibold))
+//                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(HomePalette.primaryText)
                     
                     Text("Manage your measurement schedule")
-                        .font(.system(size: 14))
+                        .font(.system(.subheadline))
+//                        .font(.system(size: 14))
                         .foregroundStyle(HomePalette.secondaryText)
                 }
                 
@@ -215,7 +218,7 @@ private struct LatestReadingDashboardCard: View {
         ZStack {
             decorativeBackground
             
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 5) {
                 cardHeader
                 pressureReading
                 metadata
@@ -283,11 +286,13 @@ private struct LatestReadingDashboardCard: View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Latest Reading")
-                    .font(.system(size: 17, weight: .medium))
+                    .font(.system(.subheadline, weight: .medium))
+//                    .font(.system(size: 17, weight: .medium))
                     .foregroundStyle(Color.white.opacity(0.72))
                 
                 Text(shortDateTime(reading.date))
-                    .font(.system(size: 16))
+                    .font(.system(.subheadline, weight: .regular))
+//                    .font(.system(size: 16))
                     .foregroundStyle(Color.white.opacity(0.54))
             }
             
@@ -335,7 +340,8 @@ private struct LatestReadingDashboardCard: View {
                 .foregroundStyle(Color.white.opacity(0.58))
             
             Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 22, weight: .semibold))
+                .font(.system(.headline, weight: .semibold))
+//                .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(HomePalette.pulse)
                 .padding(.leading, 8)
         }
@@ -344,25 +350,30 @@ private struct LatestReadingDashboardCard: View {
     private var metadata: some View {
         HStack(spacing: 8) {
             Image(systemName: "heart.fill")
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(.subheadline, weight: .semibold))
+//                .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(HomePalette.pulse)
             
             if let pulse = reading.pulse {
                 Text(pulse, format: .number)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(.headline, weight: .semibold))
+//                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.white)
                 
                 Text("bpm")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(.subheadline, weight: .semibold))
+//                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.white.opacity(0.76))
             } else {
                 Text("-- bpm")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(.headline, weight: .semibold))
+//                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Color.white.opacity(0.76))
             }
             
             Text("mmHg")
-                .font(.system(size: 15))
+                .font(.system(.subheadline))
+//                .font(.system(size: 15))
                 .foregroundStyle(Color.white.opacity(0.38))
                 .padding(.leading, 12)
         }
@@ -376,7 +387,7 @@ private struct LatestReadingDashboardCard: View {
         )
         .frame(height: 205)
         .padding(.horizontal, 18)
-        .padding(.top, 2)
+        .padding(.top, 15)
     }
 }
 
@@ -497,7 +508,8 @@ private struct StatusPill: View {
     
     var body: some View {
         Text(title)
-            .font(.system(size: 14, weight: .semibold))
+            .font(.system(.caption, weight: .semibold))
+//            .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(color)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
@@ -528,24 +540,27 @@ private struct AverageMetricCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(.caption, weight: .medium))
+//                .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(HomePalette.secondaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
             
             Text(value.map(String.init) ?? "--")
-                .font(
-                    .system(
-                        size: 29,
-                        weight: .semibold,
-                        design: .rounded
-                    )
-                )
+                .font(.system(.title, design: .rounded, weight: .semibold))
+//                .font(
+//                    .system(
+//                        size: 29,
+//                        weight: .semibold,
+//                        design: .rounded
+//                    )
+//                )
                 .foregroundStyle(valueColor)
                 .lineLimit(1)
             
             Text(unit)
-                .font(.system(size: 13))
+                .font(.system(.caption))
+//                .font(.system(size: 13))
                 .foregroundStyle(HomePalette.tertiaryText)
         }
         .frame(
@@ -582,7 +597,8 @@ private struct RecentReadingDashboardRow: View {
                 .frame(width: 11, height: 11)
             
             Text(shortDateTime(reading.date))
-                .font(.system(size: 16))
+                .font(.system(.body))
+//                .font(.system(size: 16))
                 .foregroundStyle(HomePalette.secondaryText)
                 .lineLimit(1)
             
@@ -590,27 +606,30 @@ private struct RecentReadingDashboardRow: View {
             
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text("\(reading.systolic)")
-                    .font(
-                        .system(
-                            size: 25,
-                            weight: .semibold,
-                            design: .rounded
-                        )
-                    )
+                    .font(.system(.title2, design: .rounded, weight: .semibold))
+//                    .font(
+//                        .system(
+//                            size: 25,
+//                            weight: .semibold,
+//                            design: .rounded
+//                        )
+//                    )
                     .foregroundStyle(HomePalette.primaryText)
                 
                 Text("/\(reading.diastolic)")
-                    .font(
-                        .system(
-                            size: 22,
-                            weight: .semibold,
-                            design: .rounded
-                        )
-                    )
+                    .font(.system(.title3, design: .rounded, weight: .semibold))
+//                    .font(
+//                        .system(
+//                            size: 22,
+//                            weight: .semibold,
+//                            design: .rounded
+//                        )
+//                    )
                     .foregroundStyle(HomePalette.primaryText)
                 
                 Text("mmHg")
-                    .font(.system(size: 14))
+                    .font(.system(.caption))
+//                    .font(.system(size: 14))
                     .foregroundStyle(HomePalette.secondaryText)
             }
             .lineLimit(1)
@@ -645,13 +664,15 @@ private struct EmptyLatestReadingCard: View {
             .frame(width: 58, height: 58)
             
             Text("No readings yet")
-                .font(.system(size: 24, weight: .bold))
+                .font(.system(.title2, weight: .bold))
+//                .font(.system(size: 24, weight: .bold))
                 .foregroundStyle(.white)
             
             Text(
                 "Capture or add your first blood pressure measurement to start tracking your health."
             )
-            .font(.system(size: 16))
+            .font(.system(.body))
+//            .font(.system(size: 16))
             .foregroundStyle(Color.white.opacity(0.68))
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -931,8 +952,116 @@ private enum HomePalette {
     )
 }
 
-#Preview {
-    HomeView2()
-        .modelContainer(for: BloodPressureReading.self, inMemory: true)
+//#Preview {
+//    HomeView2()
+//        .modelContainer(for: BloodPressureReading.self, inMemory: true)
+//}
+
+
+#Preview("Home - With Mock Data") {
+    HomeView2Preview()
 }
 
+@MainActor
+private struct HomeView2Preview: View {
+    var body: some View {
+        HomeView2()
+            .modelContainer(Self.previewContainer)
+    }
+
+    private static let previewContainer: ModelContainer = {
+        do {
+            let schema = Schema([
+                BloodPressureReading.self
+            ])
+
+            let configuration = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: true
+            )
+
+            let container = try ModelContainer(
+                for: schema,
+                configurations: [configuration]
+            )
+
+            let context = container.mainContext
+
+            Self.mockReadings.forEach { reading in
+                context.insert(reading)
+            }
+
+            return container
+        } catch {
+            fatalError("Failed to create preview container: \(error)")
+        }
+    }()
+
+    private static var mockReadings: [BloodPressureReading] {
+        let calendar = Calendar.current
+        let now = Date()
+
+        func mockDate(daysAgo: Int, hour: Int, minute: Int) -> Date {
+            let targetDate = calendar.date(
+                byAdding: .day,
+                value: -daysAgo,
+                to: now
+            ) ?? now
+
+            return calendar.date(
+                bySettingHour: hour,
+                minute: minute,
+                second: 0,
+                of: targetDate
+            ) ?? targetDate
+        }
+
+        return [
+            BloodPressureReading(
+                systolic: 104,
+                diastolic: 78,
+                pulse: 80,
+                date: mockDate(daysAgo: 0, hour: 8, minute: 45),
+                notes: "Morning reading",
+                position: MeasurementPosition.sitting.rawValue,
+                arm: ArmUsed.leftArm.rawValue
+            ),
+            BloodPressureReading(
+                systolic: 104,
+                diastolic: 80,
+                pulse: 74,
+                date: mockDate(daysAgo: 1, hour: 7, minute: 30),
+                notes: "After breakfast",
+                position: MeasurementPosition.sitting.rawValue,
+                arm: ArmUsed.leftArm.rawValue
+            ),
+            BloodPressureReading(
+                systolic: 101,
+                diastolic: 84,
+                pulse: 79,
+                date: mockDate(daysAgo: 2, hour: 8, minute: 10),
+                notes: "Normal activity",
+                position: MeasurementPosition.sitting.rawValue,
+                arm: ArmUsed.leftArm.rawValue
+            ),
+            BloodPressureReading(
+                systolic: 106,
+                diastolic: 81,
+                pulse: 75,
+                date: mockDate(daysAgo: 4, hour: 7, minute: 45),
+                notes: "Morning check",
+                position: MeasurementPosition.sitting.rawValue,
+                arm: ArmUsed.leftArm.rawValue
+            ),
+            BloodPressureReading(
+                systolic: 108,
+                diastolic: 76,
+                pulse: 72,
+                date: mockDate(daysAgo: 6, hour: 8, minute: 0),
+                notes: "Relaxed condition",
+                position: MeasurementPosition.sitting.rawValue,
+                arm: ArmUsed.leftArm.rawValue
+            )
+        ]
+    }
+}

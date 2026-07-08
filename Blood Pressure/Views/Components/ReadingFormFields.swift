@@ -45,16 +45,16 @@ struct ReadingFormFields: View {
     }
 }
 
-enum ReadingFormValidator {
-    static func validate(systolic: String, diastolic: String, pulse: String) -> (Int, Int, Int?)? {
-        guard let sys = Int(systolic), let dia = Int(diastolic) else { return nil }
-        guard (50...300).contains(sys), (30...200).contains(dia), sys > dia else { return nil }
-
-        if pulse.isEmpty {
-            return (sys, dia, nil)
-        }
-
-        guard let pulseValue = Int(pulse), (30...220).contains(pulseValue) else { return nil }
-        return (sys, dia, pulseValue)
-    }
-}
+//enum ReadingFormValidator {
+//    static func validate(systolic: String, diastolic: String, pulse: String) -> (Int, Int, Int?)? {
+//        guard let sys = Int(systolic), let dia = Int(diastolic) else { return nil }
+//        guard (50...300).contains(sys), (30...200).contains(dia), sys > dia else { return nil }
+//
+//        if pulse.isEmpty {
+//            return (sys, dia, nil)
+//        }
+//
+//        guard let pulseValue = Int(pulse), (30...220).contains(pulseValue) else { return nil }
+//        return (sys, dia, pulseValue)
+//    }
+//}
