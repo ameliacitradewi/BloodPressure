@@ -32,8 +32,6 @@ struct AddReadingView: View {
     
     @StateObject private var fastVLMService = FastVLMService()
     
-    private let ocrService = VisionOCRService()
-    
     enum InputMode: String, CaseIterable, Identifiable {
         case manual = "Manual"
         case scan = "Scan"
@@ -229,20 +227,6 @@ struct AddReadingView: View {
         }
         await processImage(image)
     }
-    
-//    private func processImage(_ image: UIImage) async {
-//        isProcessingOCR = true
-//        ocrErrorMessage = nil
-//        defer { isProcessingOCR = false }
-//        
-//        do {
-//            let result = try await ocrService.recognizeText(from: image)
-//            ocrResult = result
-//            showOCRReview = true
-//        } catch {
-//            ocrErrorMessage = error.localizedDescription
-//        }
-//    }
     
     private func processImage(_ image: UIImage) async {
         isProcessingOCR = true
