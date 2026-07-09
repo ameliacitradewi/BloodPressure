@@ -8,7 +8,7 @@ import SwiftUI
 enum AppTheme {
     static let background = Color(.systemGroupedBackground)
     static let cardBackground = Color(.secondarySystemGroupedBackground)
-    static let accent = Color(red: 0.85, green: 0.22, blue: 0.28)
+    static let accent = Color(red: 0.21, green: 0.34, blue: 0.56)
     static let secondaryAccent = Color(red: 0.18, green: 0.55, blue: 0.75)
 }
 

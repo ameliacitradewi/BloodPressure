@@ -12,7 +12,7 @@ struct MainTabView: View {
 
   var body: some View {
     TabView(selection: $selectedTab) {
-      HomeView()
+      HomeView2()
         .tabItem {
           Label("Home", systemImage: "house.fill")
         }
@@ -24,7 +24,7 @@ struct MainTabView: View {
         }
         .tag(1)
 
-      AddReadingView()
+      AddReadingView2()
         .tabItem {
           Label("Add", systemImage: "plus.circle.fill")
         }
