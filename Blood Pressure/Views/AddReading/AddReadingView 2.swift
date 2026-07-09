@@ -7,6 +7,7 @@ import SwiftUI
 import SwiftData
 import PhotosUI
 import AVFoundation
+import UIKit
 
 struct AddReadingView2: View {
     @Environment(\.modelContext) private var modelContext
@@ -89,7 +90,15 @@ struct AddReadingView2: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 18)
+                        .background(
+                            Color.clear
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    dismissKeyboard()
+                                }
+                        )
                     }
+                    .scrollDismissesKeyboard(.interactively)
 
                     if inputMode == .manual || hasReadableFastVLMResult {
                         saveButton
@@ -129,6 +138,8 @@ struct AddReadingView2: View {
                 Text(unreadableImageAlertMessage)
             }
             .onChange(of: selectedPhotoItem) { _, newItem in
+                dismissKeyboard()
+                
                 guard let newItem else { return }
                 Task { await loadPhoto(from: newItem) }
             }
@@ -139,6 +150,8 @@ struct AddReadingView2: View {
         HStack(spacing: 4) {
             ForEach(InputMode.allCases) { mode in
                 Button {
+                    dismissKeyboard()
+                    
                     withAnimation(.snappy) {
                         inputMode = mode
                     }
@@ -343,6 +356,7 @@ struct AddReadingView2: View {
     
     private var saveButton: some View {
         Button {
+            dismissKeyboard()
             hasTriedToSave = true
             saveReading()
         } label: {
@@ -369,6 +383,7 @@ struct AddReadingView2: View {
     private var scanActionButtons: some View {
         HStack(spacing: 16) {
             Button {
+                dismissKeyboard()
                 handleCameraButtonTapped()
             } label: {
                 Label(
@@ -492,6 +507,15 @@ struct AddReadingView2: View {
         selectedImage = nil
         inputMode = .manual
         hasTriedToSave = false
+    }
+    
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
     }
 }
 
