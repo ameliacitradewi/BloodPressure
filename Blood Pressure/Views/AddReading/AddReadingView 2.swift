@@ -6,6 +6,7 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import AVFoundation
 
 struct AddReadingView2: View {
     @Environment(\.modelContext) private var modelContext
@@ -25,6 +26,8 @@ struct AddReadingView2: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showCameraPermissionDenied = false
     @State private var selectedImage: UIImage?
+    @State private var inlineCamera = InlineCameraController()
+    @State private var cameraAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
     
     @State private var isProcessingOCR = false
     @State private var ocrResult: OCRParsedResult?
@@ -113,12 +116,6 @@ struct AddReadingView2: View {
                             .background(.regularMaterial)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                }
-            }
-            .sheet(isPresented: $showCamera) {
-                CameraPicker { image in
-                    selectedImage = image
-                    Task { await processImage(image) }
                 }
             }
             .sheet(isPresented: $showOCRReview) {
@@ -240,25 +237,57 @@ struct AddReadingView2: View {
                 )
             }
         }
+        .onAppear {
+            refreshCameraAuthorizationStatus()
+
+            if cameraAuthorizationStatus == .authorized {
+                inlineCamera.start()
+            }
+        }
+        .onDisappear {
+            inlineCamera.stop()
+        }
     }
     
-    private func openCamera() async {
-        let status = CameraPermissionService.authorizationStatus()
-        
-        switch status {
+    private func refreshCameraAuthorizationStatus() {
+        cameraAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
+        showCameraPermissionDenied = cameraAuthorizationStatus == .denied || cameraAuthorizationStatus == .restricted
+    }
+
+    private func handleCameraButtonTapped() {
+        refreshCameraAuthorizationStatus()
+
+        switch cameraAuthorizationStatus {
         case .authorized:
-            showCamera = true
+            captureInlineCameraPhoto()
+
         case .notDetermined:
-            let granted = await CameraPermissionService.requestAccess()
-            if granted {
-                showCamera = true
-            } else {
-                showCameraPermissionDenied = true
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    cameraAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
+                    showCameraPermissionDenied = !granted
+
+                    if granted {
+                        inlineCamera.start()
+                    }
+                }
             }
+
         case .denied, .restricted:
             showCameraPermissionDenied = true
+
         @unknown default:
             showCameraPermissionDenied = true
+        }
+    }
+
+    private func captureInlineCameraPhoto() {
+        inlineCamera.capturePhoto { image in
+            selectedImage = image
+
+            Task {
+                await processImage(image)
+            }
         }
     }
     
@@ -267,71 +296,47 @@ struct AddReadingView2: View {
             RoundedRectangle(cornerRadius: 28)
                 .fill(Color(red: 0.06, green: 0.09, blue: 0.15))
 
-            if let selectedImage {
-                Image(uiImage: selectedImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 240)
+            if cameraAuthorizationStatus == .authorized {
+                InlineCameraView(camera: inlineCamera)
                     .clipShape(RoundedRectangle(cornerRadius: 28))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 28)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        .black.opacity(0.05),
-                                        .black.opacity(0.20)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    }
-                    .overlay(alignment: .bottomLeading) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(.subheadline, weight: .bold))
-
-                            Text("Image loaded")
-                                .font(.system(.subheadline, weight: .semibold))
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(.black.opacity(0.35))
-                        .clipShape(Capsule())
-                        .padding(18)
-                    }
             } else {
-                VStack(spacing: 18) {
-                    RoundedRectangle(cornerRadius: 22)
-                        .stroke(
-                            Color.white.opacity(0.55),
-                            style: StrokeStyle(
-                                lineWidth: 2,
-                                dash: [7, 6],
-                                dashPhase: 0
-                            )
-                        )
-                        .frame(height: 120)
-                        .overlay {
-                            VStack(spacing: 12) {
-                                Image(systemName: "camera")
-                                    .font(.system(size: 34, weight: .semibold))
-                                    .foregroundStyle(.white.opacity(0.55))
-
-                                Text("Point at your BP monitor display")
-                                    .font(.system(.subheadline, weight: .semibold))
-                                    .foregroundStyle(.white.opacity(0.55))
-                                    .multilineTextAlignment(.center)
-                            }
-                        }
-                        .padding(.horizontal, 70)
-                }
+                scanPlaceholder
             }
+
+            scanFrameOverlay
         }
         .frame(height: 240)
+        .clipShape(RoundedRectangle(cornerRadius: 28))
     }
+    
+    private var scanPlaceholder: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "camera")
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.55))
+
+            Text("Point at your BP monitor display")
+                .font(.system(.subheadline, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+        }
+    }
+    
+    private var scanFrameOverlay: some View {
+        RoundedRectangle(cornerRadius: 22)
+            .stroke(
+                Color.white.opacity(0.62),
+                style: StrokeStyle(
+                    lineWidth: 2,
+                    dash: [7, 6],
+                    dashPhase: 0
+                )
+            )
+            .frame(height: 120)
+            .padding(.horizontal, 70)
+    }
+    
+
     
     private func loadPhoto(from item: PhotosPickerItem) async {
         guard let data = try? await item.loadTransferable(type: Data.self),
@@ -372,17 +377,20 @@ struct AddReadingView2: View {
     private var scanActionButtons: some View {
         HStack(spacing: 16) {
             Button {
-                Task { await openCamera() }
+                handleCameraButtonTapped()
             } label: {
-                Label("Use Camera", systemImage: "camera")
-                    .font(.system(.headline, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 58)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18)
-                            .fill(Color(red: 0.20, green: 0.36, blue: 0.58))
-                    )
+                Label(
+                    cameraAuthorizationStatus == .authorized ? "Take Photo" : "Use Camera",
+                    systemImage: cameraAuthorizationStatus == .authorized ? "camera.fill" : "camera"
+                )
+                .font(.system(.headline, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 58)
+                .background(
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(Color(red: 0.20, green: 0.36, blue: 0.58))
+                )
             }
             .buttonStyle(.plain)
 
