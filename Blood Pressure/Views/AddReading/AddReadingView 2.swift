@@ -22,17 +22,15 @@ struct AddReadingView2: View {
     
     @State private var hasTriedToSave = false
     
-    @State private var showCamera = false
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showCameraPermissionDenied = false
     @State private var selectedImage: UIImage?
     @State private var inlineCamera = InlineCameraController()
     @State private var cameraAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
     
-    @State private var isProcessingOCR = false
-    @State private var ocrResult: OCRParsedResult?
-    @State private var showOCRReview = false
-    @State private var ocrErrorMessage: String?
+    @State private var isProcessingFastVLM = false
+    @State private var fastVLMResult: OCRParsedResult?
+    @State private var fastVLMErrorMessage: String?
     @State private var showSaveSuccess = false
     @State private var validationError: String?
     @State private var showUnreadableImageAlert = false
@@ -80,8 +78,8 @@ struct AddReadingView2: View {
                                     .padding(.horizontal, 4)
                             }
 
-                            if let ocrErrorMessage {
-                                Text(ocrErrorMessage)
+                            if let fastVLMErrorMessage {
+                                Text(fastVLMErrorMessage)
                                     .font(.caption)
                                     .foregroundStyle(.red)
                                     .padding(.horizontal, 4)
@@ -107,7 +105,7 @@ struct AddReadingView2: View {
             .navigationTitle("Log Reading")
             .navigationBarTitleDisplayMode(.large)
             .overlay {
-                if isProcessingOCR {
+                if isProcessingFastVLM {
                     ZStack {
                         Color.black.opacity(0.3).ignoresSafeArea()
 
@@ -116,32 +114,6 @@ struct AddReadingView2: View {
                             .background(.regularMaterial)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                }
-            }
-            .sheet(isPresented: $showOCRReview) {
-                if let ocrResult {
-                    OCRResultReviewView(
-                        ocrResult: ocrResult,
-                        date: $date,
-                        notes: $notes,
-                        position: $position,
-                        arm: $arm,
-                        onSave: { sys, dia, pul in
-                            systolic = String(sys)
-                            diastolic = String(dia)
-                            pulse = pul.map(String.init) ?? ""
-
-                            self.ocrResult = OCRParsedResult(
-                                systolic: sys,
-                                diastolic: dia,
-                                pulse: pul,
-                                rawLines: ocrResult.rawLines
-                            )
-
-                            showOCRReview = false
-                            saveReading()
-                        }
-                    )
                 }
             }
             .alert("Reading Saved", isPresented: $showSaveSuccess) {
@@ -202,7 +174,7 @@ struct AddReadingView2: View {
     }
     
     private var hasReadableFastVLMResult: Bool {
-        guard let result = ocrResult else { return false }
+        guard let result = fastVLMResult else { return false }
 
         let hasSystolic = (result.systolic ?? 0) > 0
         let hasDiastolic = (result.diastolic ?? 0) > 0
@@ -292,56 +264,76 @@ struct AddReadingView2: View {
     }
     
     private var scanCameraPreview: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 28)
-                .fill(Color(red: 0.06, green: 0.09, blue: 0.15))
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = width * 3 / 4
+            let guideWidth = width * 0.82
+            let guideHeight = height * 0.58
 
-            if cameraAuthorizationStatus == .authorized {
-                InlineCameraView(camera: inlineCamera)
-                    .clipShape(RoundedRectangle(cornerRadius: 28))
-            } else {
-                scanPlaceholder
+            ZStack {
+                RoundedRectangle(cornerRadius: 28)
+                    .fill(Color(red: 0.06, green: 0.09, blue: 0.15))
+
+                if cameraAuthorizationStatus == .authorized {
+                    InlineCameraView(camera: inlineCamera)
+                        .clipShape(RoundedRectangle(cornerRadius: 28))
+                    
+                    scanHelpText
+                } else {
+                    scanPlaceholder
+                }
+
+                RoundedRectangle(cornerRadius: 22)
+                    .stroke(
+                        Color.white.opacity(0.72),
+                        style: StrokeStyle(
+                            lineWidth: 2,
+                            dash: [7, 6],
+                            dashPhase: 0
+                        )
+                    )
+                    .frame(width: guideWidth, height: guideHeight)
             }
-
-            scanFrameOverlay
+            .frame(width: width, height: height)
+            .clipShape(RoundedRectangle(cornerRadius: 28))
         }
-        .frame(height: 240)
-        .clipShape(RoundedRectangle(cornerRadius: 28))
+        .aspectRatio(4.0 / 3.0, contentMode: .fit)
     }
     
     private var scanPlaceholder: some View {
         VStack(spacing: 18) {
-            Image(systemName: "camera")
-                .font(.system(size: 34, weight: .semibold))
+            Image(systemName: "camera.viewfinder")
+                .font(.system(.largeTitle, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.55))
 
-            Text("Point at your BP monitor display")
+            Text("Allow camera access\nto use this feature")
                 .font(.system(.subheadline, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
     }
     
-    private var scanFrameOverlay: some View {
-        RoundedRectangle(cornerRadius: 22)
-            .stroke(
-                Color.white.opacity(0.62),
-                style: StrokeStyle(
-                    lineWidth: 2,
-                    dash: [7, 6],
-                    dashPhase: 0
-                )
-            )
-            .frame(height: 120)
-            .padding(.horizontal, 70)
+    private var scanHelpText: some View {
+        VStack {
+            Text("Make sure your device\nis inside this frame")
+                .font(.system(.subheadline, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.92))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+//                .background(
+//                    Capsule()
+//                        .fill(.black.opacity(0.35))
+//                )
+                .padding(.horizontal, 24)
+                .padding(.bottom, 18)
+        }
     }
-    
-
     
     private func loadPhoto(from item: PhotosPickerItem) async {
         guard let data = try? await item.loadTransferable(type: Data.self),
               let image = UIImage(data: data) else {
-            ocrErrorMessage = "Could not load the selected photo."
+            fastVLMErrorMessage = "Could not load the selected photo."
             return
         }
         
@@ -413,9 +405,9 @@ struct AddReadingView2: View {
     }
     
     private func processImage(_ image: UIImage) async {
-        isProcessingOCR = true
-        ocrErrorMessage = nil
-        ocrResult = nil
+        isProcessingFastVLM = true
+        fastVLMErrorMessage = nil
+        fastVLMResult = nil
         validationError = nil
         hasTriedToSave = false
 
@@ -424,7 +416,7 @@ struct AddReadingView2: View {
         pulse = ""
 
         defer {
-            isProcessingOCR = false
+            isProcessingFastVLM = false
         }
 
         do {
@@ -432,7 +424,7 @@ struct AddReadingView2: View {
                 from: image
             )
 
-            ocrResult = result
+            fastVLMResult = result
 
             guard (result.systolic ?? 0) > 0,
                   (result.diastolic ?? 0) > 0 else {
@@ -452,8 +444,6 @@ struct AddReadingView2: View {
             if let pulseValue = result.pulse, pulseValue > 0 {
                 pulse = String(pulseValue)
             }
-
-            showOCRReview = false
 
         } catch {
             unreadableImageAlertMessage = error.localizedDescription
@@ -495,8 +485,8 @@ struct AddReadingView2: View {
         notes = ""
         position = .sitting
         arm = .leftArm
-        ocrResult = nil
-        ocrErrorMessage = nil
+        fastVLMResult = nil
+        fastVLMErrorMessage = nil
         validationError = nil
         selectedPhotoItem = nil
         selectedImage = nil
