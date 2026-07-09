@@ -24,6 +24,7 @@ struct AddReadingView2: View {
     @State private var showCamera = false
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showCameraPermissionDenied = false
+    @State private var selectedImage: UIImage?
     
     @State private var isProcessingOCR = false
     @State private var ocrResult: OCRParsedResult?
@@ -31,6 +32,8 @@ struct AddReadingView2: View {
     @State private var ocrErrorMessage: String?
     @State private var showSaveSuccess = false
     @State private var validationError: String?
+    @State private var showUnreadableImageAlert = false
+    @State private var unreadableImageAlertMessage = ""
     
     @StateObject private var fastVLMService = FastVLMService()
     
@@ -87,7 +90,7 @@ struct AddReadingView2: View {
                         .padding(.top, 18)
                     }
 
-                    if inputMode == .manual {
+                    if inputMode == .manual || hasReadableFastVLMResult {
                         saveButton
                             .padding(.horizontal, 16)
                             .padding(.bottom, 18)
@@ -114,6 +117,7 @@ struct AddReadingView2: View {
             }
             .sheet(isPresented: $showCamera) {
                 CameraPicker { image in
+                    selectedImage = image
                     Task { await processImage(image) }
                 }
             }
@@ -149,6 +153,11 @@ struct AddReadingView2: View {
                 }
             } message: {
                 Text("Your blood pressure reading has been saved.")
+            }
+            .alert("Could Not Read Image", isPresented: $showUnreadableImageAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(unreadableImageAlertMessage)
             }
             .onChange(of: selectedPhotoItem) { _, newItem in
                 guard let newItem else { return }
@@ -195,56 +204,40 @@ struct AddReadingView2: View {
         )
     }
     
+    private var hasReadableFastVLMResult: Bool {
+        guard let result = ocrResult else { return false }
+
+        let hasSystolic = (result.systolic ?? 0) > 0
+        let hasDiastolic = (result.diastolic ?? 0) > 0
+
+        return hasSystolic && hasDiastolic
+    }
+    
     private var scanSection: some View {
-        Group {
-            Section("Scan from Image") {
-                Button {
-                    Task { await openCamera() }
-                } label: {
-                    Label("Scan from Camera", systemImage: "camera.fill")
-                }
-                
-                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                    Label("Choose from Gallery", systemImage: "photo.on.rectangle")
-                }
-            }
-            
+        VStack(spacing: 22) {
+            scanCameraPreview
+
+            scanActionButtons
+
             if showCameraPermissionDenied {
-                Section {
-                    PermissionDeniedView(
-                        title: "Camera Access Required",
-                        message: "Please enable camera access in Settings to scan your blood pressure monitor.",
-                        systemImage: "camera.fill"
-                    )
-                }
+                PermissionDeniedView(
+                    title: "Camera Access Required",
+                    message: "Please enable camera access in Settings to scan your blood pressure monitor.",
+                    systemImage: "camera.fill"
+                )
             }
             
-            if let ocrResult {
-                Section("Extracted Values (Review before saving)") {
-                    LabeledContent("Systolic", value: ocrResult.systolic.map(String.init) ?? "—")
-                    LabeledContent("Diastolic", value: ocrResult.diastolic.map(String.init) ?? "—")
-                    LabeledContent("Pulse", value: ocrResult.pulse.map(String.init) ?? "—")
-                    
-                    Button("Review & Edit") {
-                        showOCRReview = true
-                    }
-                    
-                    if !ocrResult.rawLines.isEmpty {
-                        DisclosureGroup("Raw OCR Text") {
-                            ForEach(ocrResult.rawLines, id: \.self) { line in
-                                Text(line)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-            } else {
-                Section {
-                    Text("Take or choose a photo of your blood pressure monitor. You'll review the extracted values before saving.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+            if hasReadableFastVLMResult {
+                ReadingFormFields2(
+                    systolic: $systolic,
+                    diastolic: $diastolic,
+                    pulse: $pulse,
+                    date: $date,
+                    notes: $notes,
+                    position: $position,
+                    arm: $arm,
+                    showValidationErrors: hasTriedToSave
+                )
             }
         }
     }
@@ -269,12 +262,85 @@ struct AddReadingView2: View {
         }
     }
     
+    private var scanCameraPreview: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 28)
+                .fill(Color(red: 0.06, green: 0.09, blue: 0.15))
+
+            if let selectedImage {
+                Image(uiImage: selectedImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 240)
+                    .clipShape(RoundedRectangle(cornerRadius: 28))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 28)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        .black.opacity(0.05),
+                                        .black.opacity(0.20)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .overlay(alignment: .bottomLeading) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(.subheadline, weight: .bold))
+
+                            Text("Image loaded")
+                                .font(.system(.subheadline, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(.black.opacity(0.35))
+                        .clipShape(Capsule())
+                        .padding(18)
+                    }
+            } else {
+                VStack(spacing: 18) {
+                    RoundedRectangle(cornerRadius: 22)
+                        .stroke(
+                            Color.white.opacity(0.55),
+                            style: StrokeStyle(
+                                lineWidth: 2,
+                                dash: [7, 6],
+                                dashPhase: 0
+                            )
+                        )
+                        .frame(height: 120)
+                        .overlay {
+                            VStack(spacing: 12) {
+                                Image(systemName: "camera")
+                                    .font(.system(size: 34, weight: .semibold))
+                                    .foregroundStyle(.white.opacity(0.55))
+
+                                Text("Point at your BP monitor display")
+                                    .font(.system(.subheadline, weight: .semibold))
+                                    .foregroundStyle(.white.opacity(0.55))
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+                        .padding(.horizontal, 70)
+                }
+            }
+        }
+        .frame(height: 240)
+    }
+    
     private func loadPhoto(from item: PhotosPickerItem) async {
         guard let data = try? await item.loadTransferable(type: Data.self),
               let image = UIImage(data: data) else {
             ocrErrorMessage = "Could not load the selected photo."
             return
         }
+        
+        selectedImage = image
         await processImage(image)
     }
     
@@ -303,10 +369,51 @@ struct AddReadingView2: View {
         .buttonStyle(.plain)
     }
     
+    private var scanActionButtons: some View {
+        HStack(spacing: 16) {
+            Button {
+                Task { await openCamera() }
+            } label: {
+                Label("Use Camera", systemImage: "camera")
+                    .font(.system(.headline, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 58)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18)
+                            .fill(Color(red: 0.20, green: 0.36, blue: 0.58))
+                    )
+            }
+            .buttonStyle(.plain)
+
+            PhotosPicker(
+                selection: $selectedPhotoItem,
+                matching: .images
+            ) {
+                Label("From Gallery", systemImage: "photo")
+                    .font(.system(.headline, weight: .bold))
+                    .foregroundStyle(Color(red: 0.20, green: 0.36, blue: 0.58))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 58)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18)
+                            .fill(Color(red: 0.91, green: 0.95, blue: 0.99))
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+    
     private func processImage(_ image: UIImage) async {
         isProcessingOCR = true
         ocrErrorMessage = nil
         ocrResult = nil
+        validationError = nil
+        hasTriedToSave = false
+
+        systolic = ""
+        diastolic = ""
+        pulse = ""
 
         defer {
             isProcessingOCR = false
@@ -318,10 +425,31 @@ struct AddReadingView2: View {
             )
 
             ocrResult = result
-            showOCRReview = true
+
+            guard (result.systolic ?? 0) > 0,
+                  (result.diastolic ?? 0) > 0 else {
+                unreadableImageAlertMessage = "Please make sure the blood pressure monitor display is clear, bright, and fully inside the frame."
+                showUnreadableImageAlert = true
+                return
+            }
+
+            if let systolicValue = result.systolic {
+                systolic = String(systolicValue)
+            }
+
+            if let diastolicValue = result.diastolic {
+                diastolic = String(diastolicValue)
+            }
+
+            if let pulseValue = result.pulse, pulseValue > 0 {
+                pulse = String(pulseValue)
+            }
+
+            showOCRReview = false
 
         } catch {
-            ocrErrorMessage = error.localizedDescription
+            unreadableImageAlertMessage = error.localizedDescription
+            showUnreadableImageAlert = true
         }
     }
     
@@ -363,6 +491,7 @@ struct AddReadingView2: View {
         ocrErrorMessage = nil
         validationError = nil
         selectedPhotoItem = nil
+        selectedImage = nil
         inputMode = .manual
         hasTriedToSave = false
     }
