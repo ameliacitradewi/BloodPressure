@@ -18,7 +18,7 @@ struct MainTabView: View {
         }
         .tag(0)
 
-      HistoryView()
+      HistoryView2()
         .tabItem {
           Label("History", systemImage: "clock.fill")
         }

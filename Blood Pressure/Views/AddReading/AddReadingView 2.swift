@@ -55,6 +55,7 @@ struct AddReadingView2: View {
                 VStack(spacing: 0) {
                     ScrollView(showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 20) {
+                            headerSection
                             inputModePicker
 
                             if inputMode == .manual {
@@ -111,8 +112,6 @@ struct AddReadingView2: View {
                     }
                 }
             }
-            .navigationTitle("Log Reading")
-            .navigationBarTitleDisplayMode(.large)
             .overlay {
                 if isProcessingFastVLM {
                     ZStack {
@@ -143,6 +142,14 @@ struct AddReadingView2: View {
                 guard let newItem else { return }
                 Task { await loadPhoto(from: newItem) }
             }
+        }
+    }
+    
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Add Reading")
+                .font(.system(.largeTitle, design: .serif).weight(.bold))
+                .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
         }
     }
     
