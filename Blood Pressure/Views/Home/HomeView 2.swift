@@ -302,12 +302,12 @@ private struct LatestReadingDashboardCard: View {
                     .foregroundStyle(Color.white.opacity(0.54))
             }
             
-//            Spacer(minLength: 12)
-//            
-//            StatusPill(
-//                title: statusPillText,
-//                color: statusColor
-//            )
+            Spacer(minLength: 12)
+            
+            StatusPill(
+                title: statusPillText,
+                color: statusColor
+            )
         }
     }
     
@@ -391,9 +391,9 @@ private struct LatestReadingDashboardCard: View {
             statusText: statusText,
             statusColor: statusColor
         )
-        .frame(height: 205)
+        .frame(height: 140)
         .padding(.horizontal, 18)
-        .padding(.top, 15)
+//        .padding(.top, 15)
     }
 }
 
@@ -403,55 +403,51 @@ private struct BloodPressureGauge: View {
     let progress: Double
     let statusText: String
     let statusColor: Color
-    
-    private let arcLength = 0.72
-    private let startingAngle = 140.0
-    
+
+    private let greenEnd = 0.47
+    private let yellowEnd = 0.80
+
     private var normalizedProgress: Double {
         min(max(progress, 0), 1)
     }
-    
+
     private var needleAngle: Angle {
-        .degrees(
-            startingAngle +
-            normalizedProgress *
-            arcLength *
-            360
-        )
+        .degrees(180 + normalizedProgress * 180)
     }
-    
+
     var body: some View {
         GeometryReader { proxy in
-            let side = min(
-                proxy.size.width,
-                proxy.size.height
-            )
-            
-            let lineWidth = max(side * 0.075, 14)
-            let needleLength = side * 0.32
-            
+            let width = proxy.size.width
+            let diameter = min(width, proxy.size.height * 1.75)
+            let radius = diameter / 2
+            let lineWidth = max(diameter * 0.075, 14)
+            let needleLength = radius * 0.65
+            let arcFrameHeight = radius + lineWidth / 2
+            let centerX = width / 2
+            let centerY = arcFrameHeight
+
             ZStack {
                 gaugeSegment(
-                    from: 0,
-                    to: 0.34,
+                    from: 0.00,
+                    to: greenEnd,
                     color: HomePalette.gaugeGreen,
                     lineWidth: lineWidth
                 )
-                
+
                 gaugeSegment(
-                    from: 0.34,
-                    to: 0.58,
+                    from: greenEnd,
+                    to: yellowEnd,
                     color: HomePalette.gaugeYellow,
                     lineWidth: lineWidth
                 )
-                
+
                 gaugeSegment(
-                    from: 0.58,
-                    to: arcLength,
+                    from: yellowEnd,
+                    to: 1.00,
                     color: HomePalette.gaugeOrange,
                     lineWidth: lineWidth
                 )
-                
+
                 Capsule()
                     .fill(HomePalette.gaugeNeedle)
                     .frame(
@@ -460,27 +456,25 @@ private struct BloodPressureGauge: View {
                     )
                     .offset(x: needleLength / 2)
                     .rotationEffect(needleAngle)
-                
+                    .position(
+                        x: centerX,
+                        y: centerY
+                    )
+
                 Circle()
                     .fill(HomePalette.gaugeNeedle)
                     .frame(
-                        width: side * 0.085,
-                        height: side * 0.085
+                        width: diameter * 0.085,
+                        height: diameter * 0.085
                     )
-                
-                Text(statusText)
-                    .multilineTextAlignment(.center)
-                    .font(.system(.subheadline, weight: .semibold))
-//                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(statusColor)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.75)
-                    .offset(y: side * 0.29)
+                    .position(
+                        x: centerX,
+                        y: centerY
+                    )
             }
-            .frame(width: side, height: side)
-            .position(
-                x: proxy.size.width / 2,
-                y: proxy.size.height / 2
+            .frame(
+                width: width,
+                height: proxy.size.height
             )
         }
         .animation(
@@ -488,23 +482,61 @@ private struct BloodPressureGauge: View {
             value: normalizedProgress
         )
     }
-    
+
     private func gaugeSegment(
-        from start: CGFloat,
-        to end: CGFloat,
+        from start: Double,
+        to end: Double,
         color: Color,
         lineWidth: CGFloat
     ) -> some View {
-        Circle()
-            .trim(from: start, to: end)
-            .stroke(
-                color,
-                style: StrokeStyle(
-                    lineWidth: lineWidth,
-                    lineCap: .round
-                )
+        SemiGaugeSegment(
+            startProgress: start,
+            endProgress: end
+        )
+        .stroke(
+            color,
+            style: StrokeStyle(
+                lineWidth: lineWidth,
+                lineCap: .round
             )
-            .rotationEffect(.degrees(startingAngle))
+        )
+    }
+}
+
+private struct SemiGaugeSegment: Shape {
+    let startProgress: Double
+    let endProgress: Double
+
+    func path(in rect: CGRect) -> Path {
+        let radius = min(
+            rect.width / 2,
+            rect.height * 0.72
+        )
+
+        let center = CGPoint(
+            x: rect.midX,
+            y: rect.maxY
+        )
+
+        let startAngle = Angle.degrees(
+            180 + startProgress * 180
+        )
+
+        let endAngle = Angle.degrees(
+            180 + endProgress * 180
+        )
+
+        var path = Path()
+
+        path.addArc(
+            center: center,
+            radius: radius,
+            startAngle: startAngle,
+            endAngle: endAngle,
+            clockwise: false
+        )
+
+        return path
     }
 }
 
