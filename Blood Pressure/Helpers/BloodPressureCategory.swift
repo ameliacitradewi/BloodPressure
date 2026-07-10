@@ -9,9 +9,9 @@ enum BloodPressureCategory: String, CaseIterable {
     case low = "Low"
     case normal = "Normal"
     case elevated = "Elevated"
-    case hypertensionStage1 = "Hypertension Stage 1"
-    case hypertensionStage2 = "Hypertension Stage 2"
-    case hypertensiveCrisis = "Hypertensive Crisis"
+    case hypertensionStage1 = "Hypertension\nStage 1"
+    case hypertensionStage2 = "Hypertension\nStage 2"
+    case hypertensiveCrisis = "Hypertensive\nCrisis"
 
     var color: Color {
         switch self {
