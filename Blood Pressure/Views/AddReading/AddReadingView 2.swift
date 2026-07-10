@@ -147,9 +147,13 @@ struct AddReadingView2: View {
     
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Add Reading")
+            Text("Log Reading")
                 .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
+            
+            Text("Input your blood pressure")
+                .font(.system(.body, weight: .regular))
+                .foregroundStyle(Color(red: 0.42, green: 0.48, blue: 0.62))
         }
     }
     
@@ -363,7 +367,7 @@ struct AddReadingView2: View {
     
     private var scanHelpText: some View {
         VStack {
-            Text("Make sure your device\nis inside this frame")
+            Text("Make sure your blood pressure\ndevice is inside this frame")
                 .font(.system(.subheadline, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.92))
                 .multilineTextAlignment(.center)

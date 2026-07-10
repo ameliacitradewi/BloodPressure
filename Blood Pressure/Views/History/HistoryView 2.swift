@@ -34,7 +34,7 @@ struct HistoryView2: View {
                     .ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 20) {
                         headerSection
                         
                         historyModePicker
