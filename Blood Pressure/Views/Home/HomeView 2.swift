@@ -909,40 +909,40 @@ private enum HomePalette {
         blue: 0.43
     )
     
-    static let normal = Color(
-        red: 0.20,
-        green: 0.66,
-        blue: 0.43
+    static let normal = Color(.green
+//        red: 0.20,
+//        green: 0.66,
+//        blue: 0.43
     )
     
-    static let elevated = Color(
-        red: 0.91,
-        green: 0.66,
-        blue: 0.12
+    static let elevated = Color(.yellow
+//        red: 0.91,
+//        green: 0.66,
+//        blue: 0.12
     )
     
-    static let stageOne = Color(
-        red: 0.97,
-        green: 0.39,
-        blue: 0.05
+    static let stageOne = Color(.orange
+//        red: 0.97,
+//        green: 0.39,
+//        blue: 0.05
     )
     
-    static let stageTwo = Color(
-        red: 0.91,
-        green: 0.20,
-        blue: 0.20
+    static let stageTwo = Color(.red
+//        red: 0.91,
+//        green: 0.20,
+//        blue: 0.20
     )
     
-    static let crisis = Color(
-        red: 0.72,
-        green: 0.18,
-        blue: 0.40
+    static let crisis = Color(.purple
+//        red: 0.72,
+//        green: 0.18,
+//        blue: 0.40
     )
     
-    static let low = Color(
-        red: 0.6,
-        green: 0.74,
-        blue: 0.86
+    static let low = Color(.blue
+//        red: 0.6,
+//        green: 0.74,
+//        blue: 0.86
     )
     
     static let gaugeGreen = Color(
