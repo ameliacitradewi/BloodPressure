@@ -244,7 +244,11 @@ struct AddReadingView2: View {
 
         switch cameraAuthorizationStatus {
         case .authorized:
-            captureInlineCameraPhoto()
+            if selectedImage != nil {
+                retakeInlineCameraPhoto()
+            } else {
+                captureInlineCameraPhoto()
+            }
 
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { granted in
@@ -269,6 +273,7 @@ struct AddReadingView2: View {
     private func captureInlineCameraPhoto() {
         inlineCamera.capturePhoto { image in
             selectedImage = image
+            inlineCamera.stop()
 
             Task {
                 await processImage(image)
@@ -287,25 +292,48 @@ struct AddReadingView2: View {
                 RoundedRectangle(cornerRadius: 28)
                     .fill(Color(red: 0.06, green: 0.09, blue: 0.15))
 
-                if cameraAuthorizationStatus == .authorized {
+                if let selectedImage {
+                    Image(uiImage: selectedImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: width, height: height)
+                        .clipShape(RoundedRectangle(cornerRadius: 28))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 28)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            .black.opacity(0.04),
+                                            .black.opacity(0.18)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
+
+                    selectedImageBadge
+
+                } else if cameraAuthorizationStatus == .authorized {
                     InlineCameraView(camera: inlineCamera)
                         .clipShape(RoundedRectangle(cornerRadius: 28))
-                    
+
                     scanHelpText
+
+                    RoundedRectangle(cornerRadius: 22)
+                        .stroke(
+                            Color.white.opacity(0.72),
+                            style: StrokeStyle(
+                                lineWidth: 2,
+                                dash: [7, 6],
+                                dashPhase: 0
+                            )
+                        )
+                        .frame(width: guideWidth, height: guideHeight)
+
                 } else {
                     scanPlaceholder
                 }
-
-                RoundedRectangle(cornerRadius: 22)
-                    .stroke(
-                        Color.white.opacity(0.72),
-                        style: StrokeStyle(
-                            lineWidth: 2,
-                            dash: [7, 6],
-                            dashPhase: 0
-                        )
-                    )
-                    .frame(width: guideWidth, height: guideHeight)
             }
             .frame(width: width, height: height)
             .clipShape(RoundedRectangle(cornerRadius: 28))
@@ -343,6 +371,44 @@ struct AddReadingView2: View {
         }
     }
     
+    private var selectedImageBadge: some View {
+        VStack {
+            Spacer()
+
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(.subheadline, weight: .bold))
+
+                Text("Photo captured")
+                    .font(.system(.subheadline, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.black.opacity(0.35))
+            .clipShape(Capsule())
+            .padding(.bottom, 18)
+        }
+    }
+    
+    private func retakeInlineCameraPhoto() {
+        selectedImage = nil
+        selectedPhotoItem = nil
+
+        fastVLMResult = nil
+        fastVLMErrorMessage = nil
+        validationError = nil
+        unreadableImageAlertMessage = ""
+        showUnreadableImageAlert = false
+        hasTriedToSave = false
+
+        systolic = ""
+        diastolic = ""
+        pulse = ""
+
+        inlineCamera.start()
+    }
+    
     private func loadPhoto(from item: PhotosPickerItem) async {
         guard let data = try? await item.loadTransferable(type: Data.self),
               let image = UIImage(data: data) else {
@@ -351,6 +417,8 @@ struct AddReadingView2: View {
         }
         
         selectedImage = image
+        inlineCamera.stop()
+        
         await processImage(image)
     }
     
@@ -387,8 +455,8 @@ struct AddReadingView2: View {
                 handleCameraButtonTapped()
             } label: {
                 Label(
-                    cameraAuthorizationStatus == .authorized ? "Take Photo" : "Use Camera",
-                    systemImage: cameraAuthorizationStatus == .authorized ? "camera.fill" : "camera"
+                    cameraButtonTitle,
+                    systemImage: cameraButtonSystemImage
                 )
                 .font(.system(.headline, weight: .bold))
                 .foregroundStyle(.white)
@@ -417,6 +485,22 @@ struct AddReadingView2: View {
             }
             .buttonStyle(.plain)
         }
+    }
+    
+    private var cameraButtonTitle: String {
+        guard cameraAuthorizationStatus == .authorized else {
+            return "Use Camera"
+        }
+
+        return selectedImage == nil ? "Take Photo" : "Retake"
+    }
+
+    private var cameraButtonSystemImage: String {
+        guard cameraAuthorizationStatus == .authorized else {
+            return "camera"
+        }
+
+        return selectedImage == nil ? "camera.fill" : "arrow.counterclockwise"
     }
     
     private func processImage(_ image: UIImage) async {
