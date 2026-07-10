@@ -203,6 +203,12 @@ private struct LatestReadingDashboardCard: View {
     let reading: BloodPressureReading
     
     private var statusText: String {
+        reading.category.rawValue
+//        readableCategory(reading.category)
+    }
+    
+    private var statusPillText: String {
+//        reading.category.rawValue
         readableCategory(reading.category)
     }
     
@@ -296,12 +302,12 @@ private struct LatestReadingDashboardCard: View {
                     .foregroundStyle(Color.white.opacity(0.54))
             }
             
-            Spacer(minLength: 12)
-            
-            StatusPill(
-                title: statusText,
-                color: statusColor
-            )
+//            Spacer(minLength: 12)
+//            
+//            StatusPill(
+//                title: statusPillText,
+//                color: statusColor
+//            )
         }
     }
     
@@ -463,9 +469,11 @@ private struct BloodPressureGauge: View {
                     )
                 
                 Text(statusText)
-                    .font(.system(size: 17, weight: .semibold))
+                    .multilineTextAlignment(.center)
+                    .font(.system(.subheadline, weight: .semibold))
+//                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(statusColor)
-                    .lineLimit(1)
+                    .lineLimit(2)
                     .minimumScaleFactor(0.75)
                     .offset(y: side * 0.29)
             }
@@ -744,26 +752,12 @@ private func categoryColor(
         .replacingOccurrences(of: "_", with: "")
         .replacingOccurrences(of: "-", with: "")
     
-    if rawValue.contains("crisis") {
-        return HomePalette.crisis
-    }
-    
-    if rawValue.contains("stage2") {
-        return HomePalette.stageTwo
-    }
-    
-    if rawValue.contains("stage1") ||
-        rawValue.contains("high") {
-        return HomePalette.stageOne
-    }
-    
-    if rawValue.contains("elevated") {
-        return HomePalette.elevated
-    }
-    
-    if rawValue.contains("normal") {
-        return HomePalette.normal
-    }
+    if rawValue.contains("crisis") { return HomePalette.crisis }
+    if rawValue.contains("stage2") { return HomePalette.stageTwo }
+    if rawValue.contains("stage1") || rawValue.contains("high") { return HomePalette.stageOne }
+    if rawValue.contains("elevated") { return HomePalette.elevated }
+    if rawValue.contains("normal") { return HomePalette.normal }
+    if rawValue.contains("normal") { return HomePalette.low }
     
     return HomePalette.primaryBlue
 }
@@ -777,26 +771,12 @@ private func categoryProgress(
         .replacingOccurrences(of: "_", with: "")
         .replacingOccurrences(of: "-", with: "")
     
-    if rawValue.contains("crisis") {
-        return 0.97
-    }
-    
-    if rawValue.contains("stage2") {
-        return 0.86
-    }
-    
-    if rawValue.contains("stage1") ||
-        rawValue.contains("high") {
-        return 0.70
-    }
-    
-    if rawValue.contains("elevated") {
-        return 0.46
-    }
-    
-    if rawValue.contains("normal") {
-        return 0.20
-    }
+    if rawValue.contains("crisis") { return 0.97 }
+    if rawValue.contains("stage2") { return 0.86 }
+    if rawValue.contains("stage1") || rawValue.contains("high") { return 0.70 }
+    if rawValue.contains("elevated") { return 0.46 }
+    if rawValue.contains("normal") { return 0.20 }
+    if rawValue.contains("low") || rawValue.contains("hypo") { return 0.01 }
     
     return 0.50
 }
@@ -927,6 +907,12 @@ private enum HomePalette {
         blue: 0.40
     )
     
+    static let low = Color(
+        red: 0.6,
+        green: 0.74,
+        blue: 0.86
+    )
+    
     static let gaugeGreen = Color(
         red: 0.18,
         green: 0.67,
@@ -1018,8 +1004,8 @@ private struct HomeView2Preview: View {
 
         return [
             BloodPressureReading(
-                systolic: 104,
-                diastolic: 78,
+                systolic: 204,
+                diastolic: 80,
                 pulse: 80,
                 date: mockDate(daysAgo: 0, hour: 8, minute: 45),
                 notes: "Morning reading",
@@ -1027,7 +1013,7 @@ private struct HomeView2Preview: View {
                 arm: ArmUsed.leftArm.rawValue
             ),
             BloodPressureReading(
-                systolic: 104,
+                systolic: 211,
                 diastolic: 80,
                 pulse: 74,
                 date: mockDate(daysAgo: 1, hour: 7, minute: 30),
@@ -1036,7 +1022,7 @@ private struct HomeView2Preview: View {
                 arm: ArmUsed.leftArm.rawValue
             ),
             BloodPressureReading(
-                systolic: 101,
+                systolic: 205,
                 diastolic: 84,
                 pulse: 79,
                 date: mockDate(daysAgo: 2, hour: 8, minute: 10),
@@ -1045,7 +1031,7 @@ private struct HomeView2Preview: View {
                 arm: ArmUsed.leftArm.rawValue
             ),
             BloodPressureReading(
-                systolic: 106,
+                systolic: 208,
                 diastolic: 81,
                 pulse: 75,
                 date: mockDate(daysAgo: 4, hour: 7, minute: 45),
@@ -1054,7 +1040,7 @@ private struct HomeView2Preview: View {
                 arm: ArmUsed.leftArm.rawValue
             ),
             BloodPressureReading(
-                systolic: 108,
+                systolic: 160,
                 diastolic: 76,
                 pulse: 72,
                 date: mockDate(daysAgo: 6, hour: 8, minute: 0),
