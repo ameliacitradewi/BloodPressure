@@ -75,7 +75,7 @@ enum HomePalette {
     static let elevated = Color.yellow
     static let hypertensionStage1 = Color.orange
     static let hypertensionStage2 = Color.red
-    static let hypertensiveCrisis = Color.purple
+    static let hypertensiveCrisis = Color.brown
 
     static func categoryColor(
         for category: BloodPressureCategory

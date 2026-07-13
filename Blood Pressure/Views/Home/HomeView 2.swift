@@ -168,12 +168,10 @@ struct HomeView2: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Reminders")
                         .font(.system(.headline, weight: .semibold))
-//                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(HomePalette.primaryText)
                     
                     Text("Manage your measurement schedule")
                         .font(.system(.subheadline))
-//                        .font(.system(size: 14))
                         .foregroundStyle(HomePalette.secondaryText)
                 }
                 
@@ -639,7 +637,6 @@ private struct RecentReadingDashboardRow: View {
             
             Text(shortDateTime(reading.date))
                 .font(.system(.body))
-//                .font(.system(size: 16))
                 .foregroundStyle(HomePalette.secondaryText)
                 .lineLimit(1)
             
