@@ -69,7 +69,6 @@ enum HomePalette {
     )
 
     // MARK: - Blood pressure category colors
-
     static let low = Color.blue
     static let normal = Color.green
     static let elevated = Color.yellow
@@ -81,27 +80,19 @@ enum HomePalette {
         for category: BloodPressureCategory
     ) -> Color {
         switch category {
-        case .low:
-            return low
-        case .normal:
-            return normal
-        case .elevated:
-            return elevated
-        case .hypertensionStage1:
-            return hypertensionStage1
-        case .hypertensionStage2:
-            return hypertensionStage2
-        case .hypertensiveCrisis:
-            return hypertensiveCrisis
+        case .low: return low
+        case .normal: return normal
+        case .elevated: return elevated
+        case .hypertensionStage1: return hypertensionStage1
+        case .hypertensionStage2: return hypertensionStage2
+        case .hypertensiveCrisis: return hypertensiveCrisis
         }
     }
 
     // MARK: - Gauge colors
-
     static let gaugeGreen = Color.green
     static let gaugeYellow = Color.yellow
     static let gaugeOrange = Color.orange
-
     static let gaugeNeedle = Color.black
 //    (
 //        red: 0.06,
