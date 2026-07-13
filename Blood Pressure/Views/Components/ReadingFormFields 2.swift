@@ -71,8 +71,6 @@ struct ReadingFormFields2: View {
             armSection
             
             NotesInputCard(notes: $notes)
-            
-//            detailsSection
         }
     }
     
@@ -80,7 +78,6 @@ struct ReadingFormFields2: View {
         HStack(spacing: 14) {
             Text("Date & Time")
                 .font(.system(.headline, weight: .bold))
-//                .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
 
             Spacer()
@@ -93,7 +90,6 @@ struct ReadingFormFields2: View {
             .labelsHidden()
             .datePickerStyle(.compact)
             .font(.system(.subheadline, weight: .semibold))
-//            .font(.system(size: 16, weight: .semibold))
             .tint(Color(red: 0.12, green: 0.30, blue: 0.53))
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -109,7 +105,6 @@ struct ReadingFormFields2: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Position")
                 .font(.system(.headline, weight: .bold))
-//                .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
 
             HStack(spacing: 12) {
@@ -150,7 +145,6 @@ struct ReadingFormFields2: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Arm Used")
                 .font(.system(.headline, weight: .bold))
-//                .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
 
             HStack(spacing: 12) {
@@ -196,12 +190,10 @@ private struct ReadingInputCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(.headline, weight: .bold))
-//                        .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
                     
                     Text(subtitle)
                         .font(.system(.subheadline, weight: .medium))
-//                        .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(Color(red: 0.43, green: 0.50, blue: 0.65))
                 }
                 
@@ -209,7 +201,6 @@ private struct ReadingInputCard: View {
                 
                 Text(unit)
                     .font(.system(.caption, weight: .medium))
-//                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(Color(red: 0.66, green: 0.72, blue: 0.83))
             }
             
@@ -227,7 +218,6 @@ private struct ReadingInputCard: View {
                 if isHighlighted {
                     Text(validationText)
                         .font(.system(.caption, weight: .medium))
-//                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color(red: 1.0, green: 0.18, blue: 0.43))
                 }
             }
@@ -248,12 +238,10 @@ private struct NotesInputCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Note (optional)")
                 .font(.system(.headline, weight: .bold))
-//                .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
             
             TextField("After exercise, feeling stressed...", text: $notes, axis: .vertical)
                 .font(.system(.body, weight: .regular))
-//                .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
                 .lineLimit(3...6)
         }
@@ -294,11 +282,9 @@ private func positionOption(
         VStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(.title))
-//                .font(.system(size: 28))
 
             Text(title)
                 .font(.system(.caption, weight: .semibold))
-//                .font(.system(size: 14, weight: .semibold))
                 .multilineTextAlignment(.center)
         }
         .foregroundStyle(
@@ -316,7 +302,7 @@ private func positionOption(
             RoundedRectangle(cornerRadius: 22)
                 .stroke(
                     isSelected
-                    ? Color(red: 0.21, green: 0.34, blue: 0.56)
+                    ? Color(AppTheme.accent)
                     : Color.clear,
                     lineWidth: 2
                 )
@@ -336,11 +322,9 @@ private func armOption(
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(.title))
-//                .font(.system(size: 28))
 
             Text(title)
                 .font(.system(.caption, weight: .semibold))
-//                .font(.system(size: 16, weight: .semibold))
         }
         .foregroundStyle(
             isSelected
@@ -357,7 +341,7 @@ private func armOption(
             RoundedRectangle(cornerRadius: 22)
                 .stroke(
                     isSelected
-                    ? Color(red: 0.21, green: 0.34, blue: 0.56)
+                    ? Color(AppTheme.accent)
                     : Color.clear,
                     lineWidth: 2
                 )

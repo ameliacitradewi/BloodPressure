@@ -273,7 +273,6 @@ struct HistoryView2: View {
             HStack(spacing: 8) {
                 Circle()
                     .fill(reading.category.color)
-//                    .fill(statusDotColor(for: reading))
                     .frame(width: 8, height: 8)
 
                 Text(Self.timeFormatter.string(from: reading.date))
@@ -391,18 +390,6 @@ struct HistoryView2: View {
 
         return "\(components.year ?? 0)-\(components.month ?? 0)"
     }
-
-//    private func statusDotColor(for reading: BloodPressureReading) -> Color {
-//        if reading.systolic >= 140 || reading.diastolic >= 90 {
-//            return Color(red: 0.86, green: 0.24, blue: 0.18)
-//        }
-//
-//        if reading.systolic >= 120 || reading.diastolic >= 80 {
-//            return Color(red: 0.88, green: 0.50, blue: 0.12)
-//        }
-//
-//        return Color(red: 0.22, green: 0.63, blue: 0.43)
-//    }
 
     private func deleteReadings(at offsets: IndexSet) {
         for index in offsets {
