@@ -9,19 +9,20 @@ enum BloodPressureCategory: String, CaseIterable {
     case low = "Low"
     case normal = "Normal"
     case elevated = "Elevated"
-    case hypertensionStage1 = "Hypertension\nStage 1"
-    case hypertensionStage2 = "Hypertension\nStage 2"
-    case hypertensiveCrisis = "Hypertensive\nCrisis"
+    case hypertensionStage1 = "Hypertension Stage 1"
+    case hypertensionStage2 = "Hypertension Stage 2"
+    case hypertensiveCrisis = "Hypertensive Crisis"
 
     var color: Color {
-        switch self {
-        case .low: return .blue
-        case .normal: return .green
-        case .elevated: return .yellow
-        case .hypertensionStage1: return .orange
-        case .hypertensionStage2: return .red
-        case .hypertensiveCrisis: return .purple
-        }
+        HomePalette.categoryColor(for: self)
+//        switch self {
+//        case .low: return .blue
+//        case .normal: return .green
+//        case .elevated: return .yellow
+//        case .hypertensionStage1: return .orange
+//        case .hypertensionStage2: return .red
+//        case .hypertensiveCrisis: return .purple
+//        }
     }
 
     var iconName: String {
