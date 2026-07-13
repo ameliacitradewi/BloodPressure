@@ -176,6 +176,14 @@ private struct LatestReadingDashboardCard: View {
         viewModel.categoryProgress(for: reading.category)
     }
     
+    private var trendIconName: String {
+        viewModel.latestReadingTrend.systemImageName
+    }
+    
+    private var trendIconColor: Color {
+        viewModel.latestReadingTrend.color
+    }
+    
     var body: some View {
         ZStack {
             decorativeBackground
@@ -299,9 +307,9 @@ private struct LatestReadingDashboardCard: View {
                 )
                 .foregroundStyle(Color.white.opacity(0.58))
             
-            Image(systemName: "chart.line.uptrend.xyaxis")
+            Image(systemName: trendIconName)
                 .font(.system(.headline, weight: .semibold))
-                .foregroundStyle(HomePalette.pulse)
+                .foregroundStyle(trendIconColor)
                 .padding(.leading, 8)
         }
     }
