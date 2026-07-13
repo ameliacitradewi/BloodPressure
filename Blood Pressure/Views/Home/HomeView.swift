@@ -6,33 +6,15 @@
 import SwiftUI
 import SwiftData
 
-struct HomeView2: View {
-    @Query(sort: \BloodPressureReading.date, order: .reverse) private var readings: [BloodPressureReading]
-    @AppStorage(UserSettings.userNameKey) private var userName = ""
+struct HomeView: View {
+    @Query(sort: \BloodPressureReading.date, order: .reverse)
+    private var readings: [BloodPressureReading]
     
-    private var lastReading: BloodPressureReading? {
-        readings.first
-    }
+    @AppStorage(UserSettings.userNameKey)
+    private var userName = ""
     
-    private var sevenDayReadings: [BloodPressureReading] {
-        let cutoff = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
-        return readings.filter { $0.date >= cutoff }
-    }
-    
-    private var sevenDayAverageSystolic: Int? {
-        guard !sevenDayReadings.isEmpty else { return nil }
-        return sevenDayReadings.map(\.systolic).reduce(0, +) / sevenDayReadings.count
-    }
-    
-    private var sevenDayAverageDiastolic: Int? {
-        guard !sevenDayReadings.isEmpty else { return nil }
-        return sevenDayReadings.map(\.diastolic).reduce(0, +) / sevenDayReadings.count
-    }
-    
-    private var sevenDayAveragePulse: Int? {
-        let pulseValues = sevenDayReadings.compactMap(\.pulse)
-        guard !pulseValues.isEmpty else { return nil }
-        return pulseValues.reduce(0, +) / pulseValues.count
+    private var viewModel: HomeViewModel {
+        HomeViewModel(readings: readings, userName: userName)
     }
     
     var body: some View {
@@ -59,10 +41,9 @@ struct HomeView2: View {
     }
     
     // MARK: Header
-    
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(greetingText)
+            Text(viewModel.greetingText)
                 .font(.subheadline)
                 .foregroundStyle(HomePalette.secondaryText)
             
@@ -73,29 +54,11 @@ struct HomeView2: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    private var greetingText: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        let timeGreeting: String
-        switch hour {
-        case 5..<12: timeGreeting = "Good morning"
-        case 12..<17: timeGreeting = "Good afternoon"
-        default: timeGreeting = "Good evening"
-        }
-        
-        if userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "\(timeGreeting)!"
-        }
-        
-        return "\(timeGreeting), \(userName)!"
-    }
-    
-    
     // MARK: Latest Reading
-    
     @ViewBuilder
     private var latestReadingSection: some View {
-        if let reading = lastReading {
-            LatestReadingDashboardCard(reading: reading)
+        if let reading = viewModel.lastReading {
+            LatestReadingDashboardCard(reading: reading, viewModel: viewModel)
         } else {
             EmptyLatestReadingCard()
         }
@@ -106,21 +69,21 @@ struct HomeView2: View {
         HStack(spacing: 14) {
             AverageMetricCard(
                 title: "Avg Systolic",
-                value: sevenDayAverageSystolic,
+                value: viewModel.sevenDayAverageSystolic,
                 unit: "mmHg",
                 valueColor: HomePalette.systolic
             )
             
             AverageMetricCard(
                 title: "Avg Diastolic",
-                value: sevenDayAverageDiastolic,
+                value: viewModel.sevenDayAverageDiastolic,
                 unit: "mmHg",
                 valueColor: HomePalette.diastolic
             )
             
             AverageMetricCard(
                 title: "Avg Pulse",
-                value: sevenDayAveragePulse,
+                value: viewModel.sevenDayAveragePulse,
                 unit: "bpm",
                 valueColor: HomePalette.pulse
             )
@@ -128,25 +91,22 @@ struct HomeView2: View {
     }
     
     // MARK: Recent Readings
-    
     @ViewBuilder
     private var recentReadingsSection: some View {
         if !readings.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Recent")
                     .font(.system(.title3, weight: .bold))
-//                    .font(.system(size: 23, weight: .bold))
                     .foregroundStyle(HomePalette.primaryText)
-                
-                ForEach(Array(readings.prefix(5))) { reading in
-                    RecentReadingDashboardRow(reading: reading)
+
+                ForEach(viewModel.recentReadings) { reading in
+                    RecentReadingDashboardRow(reading: reading, viewModel: viewModel)
                 }
             }
         }
     }
     
     // MARK: Reminder
-    
     private var reminderCard: some View {
         NavigationLink {
             ReminderView()
@@ -168,12 +128,10 @@ struct HomeView2: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Reminders")
                         .font(.system(.headline, weight: .semibold))
-//                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(HomePalette.primaryText)
                     
                     Text("Manage your measurement schedule")
                         .font(.system(.subheadline))
-//                        .font(.system(size: 14))
                         .foregroundStyle(HomePalette.secondaryText)
                 }
                 
@@ -198,26 +156,24 @@ struct HomeView2: View {
 }
 
 // MARK: Latest Reading Card
-
 private struct LatestReadingDashboardCard: View {
     let reading: BloodPressureReading
+    let viewModel: HomeViewModel
     
     private var statusText: String {
         reading.category.rawValue
-//        readableCategory(reading.category)
     }
     
     private var statusPillText: String {
-//        reading.category.rawValue
-        readableCategory(reading.category)
+        viewModel.readableCategory(reading.category)
     }
     
     private var statusColor: Color {
-        categoryColor(reading.category)
+        viewModel.categoryColor(for: reading.category)
     }
     
     private var statusProgress: Double {
-        categoryProgress(reading.category)
+        viewModel.categoryProgress(for: reading.category)
     }
     
     var body: some View {
@@ -293,12 +249,10 @@ private struct LatestReadingDashboardCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Latest Reading")
                     .font(.system(.subheadline, weight: .medium))
-//                    .font(.system(size: 17, weight: .medium))
                     .foregroundStyle(Color.white.opacity(0.72))
                 
-                Text(shortDateTime(reading.date))
+                Text(viewModel.shortDateTime(reading.date))
                     .font(.system(.subheadline, weight: .regular))
-//                    .font(.system(size: 16))
                     .foregroundStyle(Color.white.opacity(0.54))
             }
             
@@ -347,7 +301,6 @@ private struct LatestReadingDashboardCard: View {
             
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(.headline, weight: .semibold))
-//                .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(HomePalette.pulse)
                 .padding(.leading, 8)
         }
@@ -357,29 +310,24 @@ private struct LatestReadingDashboardCard: View {
         HStack(spacing: 8) {
             Image(systemName: "heart.fill")
                 .font(.system(.subheadline, weight: .semibold))
-//                .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(HomePalette.pulse)
             
             if let pulse = reading.pulse {
                 Text(pulse, format: .number)
                     .font(.system(.headline, weight: .semibold))
-//                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.white)
                 
                 Text("bpm")
                     .font(.system(.subheadline, weight: .semibold))
-//                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.white.opacity(0.76))
             } else {
                 Text("-- bpm")
                     .font(.system(.headline, weight: .semibold))
-//                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Color.white.opacity(0.76))
             }
             
             Text("mmHg")
                 .font(.system(.subheadline))
-//                .font(.system(size: 15))
                 .foregroundStyle(Color.white.opacity(0.38))
                 .padding(.leading, 12)
         }
@@ -398,7 +346,6 @@ private struct LatestReadingDashboardCard: View {
 }
 
 // MARK: Gauge
-
 private struct BloodPressureGauge: View {
     let progress: Double
     let statusText: String
@@ -549,7 +496,6 @@ private struct StatusPill: View {
     var body: some View {
         Text(title)
             .font(.system(.caption, weight: .semibold))
-//            .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(color)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
@@ -581,26 +527,17 @@ private struct AverageMetricCard: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.system(.caption, weight: .medium))
-//                .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(HomePalette.secondaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
             
             Text(value.map(String.init) ?? "--")
                 .font(.system(.title, design: .rounded, weight: .semibold))
-//                .font(
-//                    .system(
-//                        size: 29,
-//                        weight: .semibold,
-//                        design: .rounded
-//                    )
-//                )
                 .foregroundStyle(valueColor)
                 .lineLimit(1)
             
             Text(unit)
                 .font(.system(.caption))
-//                .font(.system(size: 13))
                 .foregroundStyle(HomePalette.tertiaryText)
         }
         .frame(
@@ -622,13 +559,12 @@ private struct AverageMetricCard: View {
 }
 
 // MARK: Recent Reading Row
-
 private struct RecentReadingDashboardRow: View {
     let reading: BloodPressureReading
+    let viewModel: HomeViewModel
     
     private var statusColor: Color {
-        reading.category.color
-//        categoryColor(reading.category)
+        viewModel.categoryColor(for: reading.category)
     }
     
     var body: some View {
@@ -637,9 +573,8 @@ private struct RecentReadingDashboardRow: View {
                 .fill(statusColor)
                 .frame(width: 11, height: 11)
             
-            Text(shortDateTime(reading.date))
+            Text(viewModel.shortDateTime(reading.date))
                 .font(.system(.body))
-//                .font(.system(size: 16))
                 .foregroundStyle(HomePalette.secondaryText)
                 .lineLimit(1)
             
@@ -648,29 +583,14 @@ private struct RecentReadingDashboardRow: View {
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text("\(reading.systolic)")
                     .font(.system(.title2, design: .rounded, weight: .semibold))
-//                    .font(
-//                        .system(
-//                            size: 25,
-//                            weight: .semibold,
-//                            design: .rounded
-//                        )
-//                    )
                     .foregroundStyle(HomePalette.primaryText)
                 
                 Text("/\(reading.diastolic)")
                     .font(.system(.title3, design: .rounded, weight: .semibold))
-//                    .font(
-//                        .system(
-//                            size: 22,
-//                            weight: .semibold,
-//                            design: .rounded
-//                        )
-//                    )
                     .foregroundStyle(HomePalette.primaryText)
                 
                 Text("mmHg")
                     .font(.system(.caption))
-//                    .font(.system(size: 14))
                     .foregroundStyle(HomePalette.secondaryText)
             }
             .lineLimit(1)
@@ -690,7 +610,6 @@ private struct RecentReadingDashboardRow: View {
 }
 
 // MARK: Empty State
-
 private struct EmptyLatestReadingCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -706,14 +625,12 @@ private struct EmptyLatestReadingCard: View {
             
             Text("No readings yet")
                 .font(.system(.title2, weight: .bold))
-//                .font(.system(size: 24, weight: .bold))
                 .foregroundStyle(.white)
             
             Text(
                 "Capture or add your first blood pressure measurement to start tracking your health."
             )
             .font(.system(.body))
-//            .font(.system(size: 16))
             .foregroundStyle(Color.white.opacity(0.68))
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -738,110 +655,7 @@ private struct EmptyLatestReadingCard: View {
     }
 }
 
-// MARK: Category Helpers
-
-private func readableCategory(
-    _ category: Any
-) -> String {
-    var result = String(describing: category)
-    
-    result = result.replacingOccurrences(
-        of: "_",
-        with: " "
-    )
-    
-    result = result.replacingOccurrences(
-        of: "-",
-        with: " "
-    )
-    
-    result = result.replacingOccurrences(
-        of: "([a-z])([A-Z])",
-        with: "$1 $2",
-        options: .regularExpression
-    )
-    
-    result = result.replacingOccurrences(
-        of: "([A-Za-z])([0-9])",
-        with: "$1 $2",
-        options: .regularExpression
-    )
-    
-    result = result.replacingOccurrences(
-        of: "hypertension",
-        with: "High",
-        options: .caseInsensitive
-    )
-    
-    return result.capitalized
-}
-
-private func categoryColor(
-    _ category: BloodPressureCategory
-) -> Color {
-    category.color
-}
-
-//private func categoryColor(
-//    _ category: Any
-//) -> Color {
-//    let rawValue = String(describing: category)
-//        .lowercased()
-//        .replacingOccurrences(of: " ", with: "")
-//        .replacingOccurrences(of: "_", with: "")
-//        .replacingOccurrences(of: "-", with: "")
-//    
-//    if rawValue.contains("crisis") { return HomePalette.hypertensiveCrisis }
-//    if rawValue.contains("stage2") { return HomePalette.hypertensionStage2 }
-//    if rawValue.contains("stage1") || rawValue.contains("high") { return HomePalette.hypertensionStage1 }
-//    if rawValue.contains("elevated") { return HomePalette.elevated }
-//    if rawValue.contains("normal") { return HomePalette.normal }
-//    if rawValue.contains("normal") { return HomePalette.low }
-//    
-//    return HomePalette.primaryBlue
-//}
-
-private func categoryProgress(
-    _ category: Any
-) -> Double {
-    let rawValue = String(describing: category)
-        .lowercased()
-        .replacingOccurrences(of: " ", with: "")
-        .replacingOccurrences(of: "_", with: "")
-        .replacingOccurrences(of: "-", with: "")
-    
-    if rawValue.contains("crisis") { return 0.97 }
-    if rawValue.contains("stage2") { return 0.86 }
-    if rawValue.contains("stage1") || rawValue.contains("high") { return 0.70 }
-    if rawValue.contains("elevated") { return 0.46 }
-    if rawValue.contains("normal") { return 0.20 }
-    if rawValue.contains("low") || rawValue.contains("hypo") { return 0.01 }
-    
-    return 0.50
-}
-
-// MARK: Date Helper
-
-private func shortDateTime(
-    _ date: Date
-) -> String {
-    let datePart = date.formatted(
-        .dateTime
-            .month(.abbreviated)
-            .day()
-    )
-    
-    let timePart = date.formatted(
-        .dateTime
-            .hour()
-            .minute()
-    )
-    
-    return "\(datePart) · \(timePart)"
-}
-
 // MARK: Shadow Modifier
-
 private extension View {
     func dashboardShadow() -> some View {
         shadow(
@@ -866,7 +680,7 @@ private extension View {
 @MainActor
 private struct HomeView2Preview: View {
     var body: some View {
-        HomeView2()
+        HomeView()
             .modelContainer(Self.previewContainer)
     }
 
