@@ -9,7 +9,7 @@ import PhotosUI
 import AVFoundation
 import UIKit
 
-struct AddReadingView2: View {
+struct AddReadingView: View {
     @Environment(\.modelContext) private var modelContext
     
     @State private var inputMode: InputMode = .manual
@@ -59,7 +59,7 @@ struct AddReadingView2: View {
                             inputModePicker
 
                             if inputMode == .manual {
-                                ReadingFormFields2(
+                                ReadingFormFields(
                                     systolic: $systolic,
                                     diastolic: $diastolic,
                                     pulse: $pulse,
@@ -170,11 +170,9 @@ struct AddReadingView2: View {
                     HStack(spacing: 8) {
                         Image(systemName: mode == .manual ? "doc.text" : "camera")
                             .font(.system(.subheadline, weight: .semibold))
-//                            .font(.system(size: 15, weight: .semibold))
 
                         Text(mode.rawValue)
                             .font(.system(.subheadline, weight: .semibold))
-//                            .font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundStyle(inputMode == mode ? Color(red: 0.12, green: 0.30, blue: 0.53) : Color(red: 0.45, green: 0.52, blue: 0.64))
                     .frame(maxWidth: .infinity)
@@ -221,7 +219,7 @@ struct AddReadingView2: View {
             }
             
             if hasReadableFastVLMResult {
-                ReadingFormFields2(
+                ReadingFormFields(
                     systolic: $systolic,
                     diastolic: $diastolic,
                     pulse: $pulse,
@@ -373,10 +371,6 @@ struct AddReadingView2: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-//                .background(
-//                    Capsule()
-//                        .fill(.black.opacity(0.35))
-//                )
                 .padding(.horizontal, 24)
                 .padding(.bottom, 18)
         }
@@ -442,11 +436,9 @@ struct AddReadingView2: View {
             HStack(spacing: 12) {
                 Image(systemName: "checkmark")
                     .font(.system(.headline, weight: .bold))
-//                    .font(.system(size: 18, weight: .bold))
 
                 Text("Save Reading")
                     .font(.system(.headline, weight: .bold))
-//                    .font(.system(size: 18, weight: .bold))
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
@@ -615,6 +607,6 @@ struct AddReadingView2: View {
 }
 
 #Preview {
-    AddReadingView2()
+    AddReadingView()
         .modelContainer(for: BloodPressureReading.self, inMemory: true)
 }

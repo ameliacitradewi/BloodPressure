@@ -24,7 +24,7 @@ struct MainTabView: View {
         }
         .tag(1)
 
-      AddReadingView2()
+      AddReadingView()
         .tabItem {
           Label("Add", systemImage: "plus.circle.fill")
         }

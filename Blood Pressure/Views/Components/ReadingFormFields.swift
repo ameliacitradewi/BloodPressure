@@ -6,7 +6,7 @@
 import SwiftUI
 import SwiftData
 
-struct ReadingFormFields2: View {
+struct ReadingFormFields: View {
     @Binding var systolic: String
     @Binding var diastolic: String
     @Binding var pulse: String

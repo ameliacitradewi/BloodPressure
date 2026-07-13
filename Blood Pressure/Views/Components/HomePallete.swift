@@ -94,9 +94,4 @@ enum HomePalette {
     static let gaugeYellow = Color.yellow
     static let gaugeOrange = Color.orange
     static let gaugeNeedle = Color.black
-//    (
-//        red: 0.06,
-//        green: 0.13,
-//        blue: 0.27
-//    )
 }
