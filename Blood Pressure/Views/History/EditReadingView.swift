@@ -35,7 +35,7 @@ struct EditReadingView: View {
     var body: some View {
         NavigationStack {
             Form {
-                ReadingFormFields2(
+                ReadingFormFields(
                     systolic: $systolic,
                     diastolic: $diastolic,
                     pulse: $pulse,

@@ -15,14 +15,6 @@ enum BloodPressureCategory: String, CaseIterable {
 
     var color: Color {
         HomePalette.categoryColor(for: self)
-//        switch self {
-//        case .low: return .blue
-//        case .normal: return .green
-//        case .elevated: return .yellow
-//        case .hypertensionStage1: return .orange
-//        case .hypertensionStage2: return .red
-//        case .hypertensiveCrisis: return .purple
-//        }
     }
 
     var iconName: String {
