@@ -627,7 +627,8 @@ private struct RecentReadingDashboardRow: View {
     let reading: BloodPressureReading
     
     private var statusColor: Color {
-        categoryColor(reading.category)
+        reading.category.color
+//        categoryColor(reading.category)
     }
     
     var body: some View {
@@ -776,23 +777,29 @@ private func readableCategory(
 }
 
 private func categoryColor(
-    _ category: Any
+    _ category: BloodPressureCategory
 ) -> Color {
-    let rawValue = String(describing: category)
-        .lowercased()
-        .replacingOccurrences(of: " ", with: "")
-        .replacingOccurrences(of: "_", with: "")
-        .replacingOccurrences(of: "-", with: "")
-    
-    if rawValue.contains("crisis") { return HomePalette.crisis }
-    if rawValue.contains("stage2") { return HomePalette.stageTwo }
-    if rawValue.contains("stage1") || rawValue.contains("high") { return HomePalette.stageOne }
-    if rawValue.contains("elevated") { return HomePalette.elevated }
-    if rawValue.contains("normal") { return HomePalette.normal }
-    if rawValue.contains("normal") { return HomePalette.low }
-    
-    return HomePalette.primaryBlue
+    category.color
 }
+
+//private func categoryColor(
+//    _ category: Any
+//) -> Color {
+//    let rawValue = String(describing: category)
+//        .lowercased()
+//        .replacingOccurrences(of: " ", with: "")
+//        .replacingOccurrences(of: "_", with: "")
+//        .replacingOccurrences(of: "-", with: "")
+//    
+//    if rawValue.contains("crisis") { return HomePalette.hypertensiveCrisis }
+//    if rawValue.contains("stage2") { return HomePalette.hypertensionStage2 }
+//    if rawValue.contains("stage1") || rawValue.contains("high") { return HomePalette.hypertensionStage1 }
+//    if rawValue.contains("elevated") { return HomePalette.elevated }
+//    if rawValue.contains("normal") { return HomePalette.normal }
+//    if rawValue.contains("normal") { return HomePalette.low }
+//    
+//    return HomePalette.primaryBlue
+//}
 
 private func categoryProgress(
     _ category: Any
@@ -844,130 +851,6 @@ private extension View {
             y: 7
         )
     }
-}
-
-// MARK: Colors
-
-private enum HomePalette {
-    static let background = Color(
-        red: 0.955,
-        green: 0.965,
-        blue: 0.985
-    )
-    
-    static let primaryText = Color(
-        red: 0.09,
-        green: 0.13,
-        blue: 0.25
-    )
-    
-    static let secondaryText = Color(
-        red: 0.39,
-        green: 0.47,
-        blue: 0.63
-    )
-    
-    static let tertiaryText = Color(
-        red: 0.68,
-        green: 0.73,
-        blue: 0.83
-    )
-    
-    static let primaryBlue = Color(
-        red: 0.16,
-        green: 0.35,
-        blue: 0.58
-    )
-    
-    static let heroStart = Color(
-        red: 0.16,
-        green: 0.35,
-        blue: 0.57
-    )
-    
-    static let heroEnd = Color(
-        red: 0.10,
-        green: 0.22,
-        blue: 0.40
-    )
-    
-    static let systolic = Color(
-        red: 0.15,
-        green: 0.32,
-        blue: 0.56
-    )
-    
-    static let diastolic = Color(
-        red: 0.48,
-        green: 0.30,
-        blue: 0.90
-    )
-    
-    static let pulse = Color(
-        red: 0.96,
-        green: 0.23,
-        blue: 0.43
-    )
-    
-    static let normal = Color(.green
-//        red: 0.20,
-//        green: 0.66,
-//        blue: 0.43
-    )
-    
-    static let elevated = Color(.yellow
-//        red: 0.91,
-//        green: 0.66,
-//        blue: 0.12
-    )
-    
-    static let stageOne = Color(.orange
-//        red: 0.97,
-//        green: 0.39,
-//        blue: 0.05
-    )
-    
-    static let stageTwo = Color(.red
-//        red: 0.91,
-//        green: 0.20,
-//        blue: 0.20
-    )
-    
-    static let crisis = Color(.purple
-//        red: 0.72,
-//        green: 0.18,
-//        blue: 0.40
-    )
-    
-    static let low = Color(.blue
-//        red: 0.6,
-//        green: 0.74,
-//        blue: 0.86
-    )
-    
-    static let gaugeGreen = Color(
-        red: 0.18,
-        green: 0.67,
-        blue: 0.43
-    )
-    
-    static let gaugeYellow = Color(
-        red: 0.91,
-        green: 0.65,
-        blue: 0.12
-    )
-    
-    static let gaugeOrange = Color(
-        red: 0.95,
-        green: 0.34,
-        blue: 0.07
-    )
-    
-    static let gaugeNeedle = Color(
-        red: 0.06,
-        green: 0.13,
-        blue: 0.27
-    )
 }
 
 //#Preview {
