@@ -21,7 +21,14 @@ final class NotificationService: ObservableObject {
     @discardableResult
     func requestPermission() async -> Bool {
         do {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+            let granted = try await center.requestAuthorization(
+                options: [
+                    .alert,
+                    .sound,
+                    .badge
+                ]
+            )
+
             await refreshAuthorizationStatus()
             return granted
         } catch {
@@ -31,56 +38,95 @@ final class NotificationService: ObservableObject {
     }
 
     func scheduleReminders(
-        morningEnabled: Bool,
-        morningTime: Date,
-        eveningEnabled: Bool,
-        eveningTime: Date,
-        customEnabled: Bool,
-        customTime: Date
+        _ reminders: [ReminderNotification]
     ) async {
         center.removeAllPendingNotificationRequests()
 
-        guard authorizationStatus == .authorized else { return }
-
-        if morningEnabled {
-            await scheduleDailyReminder(
-                id: "morning_reminder",
-                title: "Morning Blood Pressure Check",
-                body: "Time to record your morning blood pressure reading.",
-                time: morningTime
-            )
+        guard authorizationStatus == .authorized else {
+            return
         }
 
-        if eveningEnabled {
+        for reminder in reminders where reminder.isEnabled {
             await scheduleDailyReminder(
-                id: "evening_reminder",
-                title: "Evening Blood Pressure Check",
-                body: "Time to record your evening blood pressure reading.",
-                time: eveningTime
-            )
-        }
-
-        if customEnabled {
-            await scheduleDailyReminder(
-                id: "custom_reminder",
-                title: "Blood Pressure Reminder",
-                body: "Don't forget to log your blood pressure.",
-                time: customTime
+                id: reminder.notificationIdentifier,
+                title: reminder.title,
+                body: "Time to log your blood pressure reading.",
+                time: reminder.time
             )
         }
     }
 
-    private func scheduleDailyReminder(id: String, title: String, body: String, time: Date) async {
-        let components = Calendar.current.dateComponents([.hour, .minute], from: time)
+    private func scheduleDailyReminder(
+        id: String,
+        title: String,
+        body: String,
+        time: Date
+    ) async {
+        let components = Calendar.current.dateComponents(
+            [
+                .hour,
+                .minute
+            ],
+            from: time
+        )
 
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
         content.sound = .default
 
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
-        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        let trigger = UNCalendarNotificationTrigger(
+            dateMatching: components,
+            repeats: true
+        )
+
+        let request = UNNotificationRequest(
+            identifier: id,
+            content: content,
+            trigger: trigger
+        )
 
         try? await center.add(request)
+    }
+}
+
+
+//
+//  ReminderNotification.swift
+//  Blood Pressure
+//
+
+import Foundation
+
+struct ReminderNotification: Identifiable, Codable, Equatable {
+    let id: String
+    var title: String
+    var timeInterval: TimeInterval
+    var isEnabled: Bool
+
+    init(
+        id: String = UUID().uuidString,
+        title: String,
+        time: Date,
+        isEnabled: Bool = true
+    ) {
+        self.id = id
+        self.title = title
+        self.timeInterval = time.timeIntervalSince1970
+        self.isEnabled = isEnabled
+    }
+
+    var time: Date {
+        get {
+            Date(timeIntervalSince1970: timeInterval)
+        }
+
+        set {
+            timeInterval = newValue.timeIntervalSince1970
+        }
+    }
+
+    var notificationIdentifier: String {
+        "bp_reminder_\(id)"
     }
 }

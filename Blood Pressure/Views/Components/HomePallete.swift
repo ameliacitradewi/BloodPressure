@@ -68,7 +68,7 @@ enum HomePalette {
         blue: 0.43
     )
 
-    // MARK: - Blood pressure category colors
+    // MARK: Blood pressure category colors
     static let low = Color.blue
     static let normal = Color.green
     static let elevated = Color.yellow
@@ -89,7 +89,7 @@ enum HomePalette {
         }
     }
 
-    // MARK: - Gauge colors
+    // MARK: Gauge colors
     static let gaugeGreen = Color.green
     static let gaugeYellow = Color.yellow
     static let gaugeOrange = Color.orange

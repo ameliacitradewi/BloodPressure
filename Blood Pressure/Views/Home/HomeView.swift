@@ -48,7 +48,7 @@ struct HomeView: View {
                 .foregroundStyle(HomePalette.secondaryText)
             
             Text("Blood Pressure Tracker")
-                .font(.system(.title2, design: .serif, weight: .bold))
+                .font(.system(.title2, design: .serif, weight: .bold)) // another page use largetitle
                 .foregroundStyle(HomePalette.primaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -50,11 +50,11 @@ struct HistoryView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("History")
                 .font(.system(.largeTitle, design: .serif).weight(.bold))
-                .foregroundStyle(Color(red: 0.09, green: 0.12, blue: 0.25))
+                .foregroundStyle(HomePalette.primaryText)
 
             Text("\(readings.count) \(readings.count == 1 ? "reading" : "readings") logged")
                 .font(.system(.body, weight: .regular))
-                .foregroundStyle(Color(red: 0.42, green: 0.48, blue: 0.62))
+                .foregroundStyle(HomePalette.secondaryText)
         }
     }
 
