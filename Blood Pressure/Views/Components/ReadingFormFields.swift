@@ -184,6 +184,8 @@ private struct ReadingInputCard: View {
     let isHighlighted: Bool
     let validationText: String
     
+    private let maxDigitInput = 3
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
@@ -210,6 +212,13 @@ private struct ReadingInputCard: View {
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundStyle(Color(red: 0.12, green: 0.30, blue: 0.53))
                     .tint(Color(red: 0.12, green: 0.30, blue: 0.53))
+                    .onChange(of: text) { _, newValue in
+                            let limitedValue = limitedDigitText(from: newValue)
+
+                            if limitedValue != newValue {
+                                text = limitedValue
+                            }
+                        }
                 
                 Rectangle()
                     .fill(isHighlighted ? Color(red: 1.0, green: 0.18, blue: 0.43) : Color(red: 0.87, green: 0.91, blue: 0.96))
@@ -228,6 +237,14 @@ private struct ReadingInputCard: View {
                 .fill(.white)
                 .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 5)
         )
+    }
+    
+    private func limitedDigitText(from value: String) -> String {
+        let digitsOnly = value.filter { character in
+            character.isNumber
+        }
+
+        return String(digitsOnly.prefix(maxDigitInput))
     }
 }
 
