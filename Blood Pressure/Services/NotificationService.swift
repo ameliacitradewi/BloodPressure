@@ -49,7 +49,7 @@ final class NotificationService: ObservableObject {
         for reminder in reminders where reminder.isEnabled {
             await scheduleDailyReminder(
                 id: reminder.notificationIdentifier,
-                title: reminder.title,
+                title: reminder.notificationTitle,
                 body: "Time to log your blood pressure reading.",
                 time: reminder.time
             )

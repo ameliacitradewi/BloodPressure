@@ -53,10 +53,14 @@ final class FastVLMService: ObservableObject {
                 
             case .invalidResponse(let response):
                 return """
-                FastVLM returned an invalid response:
-                
-                \(response)
+                The detected values are not valid. \
+                Please take another photo.
                 """
+//                return """
+//                FastVLM returned an invalid response:
+//                
+//                \(response)
+//                """
             }
         }
     }
