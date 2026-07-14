@@ -324,7 +324,7 @@ struct HistoryView: View {
 
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
+        formatter.dateFormat = "HH:mm"
         return formatter
     }()
 }

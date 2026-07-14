@@ -209,7 +209,7 @@ private struct ReadingInputCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 TextField(placeholder, text: $text)
                     .keyboardType(keyboardType)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(.system(size: 34, weight: .bold, design: .monospaced))
                     .foregroundStyle(Color(red: 0.12, green: 0.30, blue: 0.53))
                     .tint(Color(red: 0.12, green: 0.30, blue: 0.53))
                     .onChange(of: text) { _, newValue in

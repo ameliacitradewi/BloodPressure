@@ -27,8 +27,8 @@ struct HomeView: View {
                     recentReadingsSection
                     reminderCard
                     
-                    HealthDisclaimerView()
-                        .padding(.top, 4)
+//                    HealthDisclaimerView()
+//                        .padding(.top, 4)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)

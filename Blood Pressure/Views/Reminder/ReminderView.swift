@@ -127,10 +127,10 @@ struct ReminderView: View {
                     Text(Self.timeFormatter.string(from: reminder.time))
                         .font(.system(.title, design: .monospaced).weight(.bold))
                         .foregroundStyle(HomePalette.primaryText)
-
-                    Text(Self.periodFormatter.string(from: reminder.time))
-                        .font(.system(.title3, design: .monospaced).weight(.bold))
-                        .foregroundStyle(HomePalette.primaryText)
+//
+//                    Text(Self.periodFormatter.string(from: reminder.time))
+//                        .font(.system(.title3, design: .monospaced).weight(.bold))
+//                        .foregroundStyle(HomePalette.primaryText)
                 }
 
                 Text(reminder.title)
@@ -543,7 +543,7 @@ struct ReminderView: View {
 
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm"
+        formatter.dateFormat = "HH:mm"
         return formatter
     }()
 

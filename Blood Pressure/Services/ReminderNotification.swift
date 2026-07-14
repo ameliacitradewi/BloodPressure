@@ -38,4 +38,10 @@ struct ReminderNotification: Identifiable, Codable, Equatable {
     var notificationIdentifier: String {
         "bp_reminder_\(id)"
     }
+    
+    var notificationTitle: String {
+        title
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .capitalized
+    }
 }
