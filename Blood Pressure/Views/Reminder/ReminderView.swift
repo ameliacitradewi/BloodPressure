@@ -62,7 +62,7 @@ struct ReminderView: View {
                                     deleteReminder(reminder)
                                 } label: {
                                     Image(systemName: "trash")
-                                }
+                                }.tint(.red)
                             }
                     }
 
@@ -134,7 +134,7 @@ struct ReminderView: View {
                 }
 
                 Text(reminder.title)
-                    .font(.system(.body, weight: .regular))
+                    .font(.system(.caption, weight: .regular))
                     .foregroundStyle(HomePalette.secondaryText)
                     .lineLimit(1)
             }
@@ -227,16 +227,16 @@ struct ReminderView: View {
                 .datePickerStyle(.compact)
                 .tint(HomePalette.primaryBlue)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 20)
+//                .padding(.horizontal, 20)
                 .frame(height: 66)
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(HomePalette.background.opacity(0.70))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                .stroke(HomePalette.tertiaryText.opacity(0.35), lineWidth: 1)
-                        }
-                )
+//                .background(
+//                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+//                        .fill(HomePalette.background.opacity(0.70))
+//                        .overlay {
+//                            RoundedRectangle(cornerRadius: 28, style: .continuous)
+//                                .stroke(HomePalette.tertiaryText.opacity(0.35), lineWidth: 1)
+//                        }
+//                )
             }
 
             VStack(alignment: .leading, spacing: 10) {
