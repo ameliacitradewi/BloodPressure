@@ -40,39 +40,46 @@ struct ReminderView: View {
                 HomePalette.background
                     .ignoresSafeArea()
 
-                ScrollView(showsIndicators: false) {
-                    LazyVStack(alignment: .leading, spacing: 20) {
-                        headerSection
+                List {
+                    headerSection
+                        .listRowStyle()
 
-                        if showPermissionDenied ||
-                            notificationService.authorizationStatus == .denied {
-                            PermissionDeniedView(
-                                title: "Notifications Disabled",
-                                message: "Please enable notifications in Settings to receive blood pressure reminders.",
-                                systemImage: "bell.slash.fill"
-                            )
-                        }
-
-                        ForEach(reminders) { reminder in
-                            ReminderSwipeDeleteRow {
-                                reminderRow(reminder)
-                            } onDelete: {
-                                deleteReminder(reminder)
-                            }
-                        }
-
-                        if showAddReminderForm {
-                            addReminderForm
-                        } else {
-                            addReminderButton
-                        }
-
-                        infoCard
+                    if showPermissionDenied ||
+                        notificationService.authorizationStatus == .denied {
+                        PermissionDeniedView(
+                            title: "Notifications Disabled",
+                            message: "Please enable notifications in Settings to receive blood pressure reminders.",
+                            systemImage: "bell.slash.fill"
+                        )
+                        .listRowStyle()
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 24)
-                    .padding(.bottom, 32)
+
+                    ForEach(reminders) { reminder in
+                        reminderRow(reminder)
+                            .listRowStyle()
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    deleteReminder(reminder)
+                                } label: {
+                                    Image(systemName: "trash")
+                                }
+                            }
+                    }
+
+                    if showAddReminderForm {
+                        addReminderForm
+                            .listRowStyle()
+                    } else {
+                        addReminderButton
+                            .listRowStyle()
+                    }
+
+                    infoCard
+                        .listRowStyle()
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(HomePalette.background)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
@@ -199,19 +206,23 @@ struct ReminderView: View {
     private var addReminderForm: some View {
         VStack(alignment: .leading, spacing: 22) {
             Text("New Reminder")
-                .font(.system(.title3, weight: .bold))
+                .font(.system(.headline, weight: .semibold))
                 .foregroundStyle(HomePalette.primaryText)
 
             VStack(alignment: .leading, spacing: 10) {
-                Text("Time")
-                    .font(.system(.body, weight: .regular))
-                    .foregroundStyle(HomePalette.secondaryText)
+                HStack {
+                    Text("Time")
+                        .font(.system(.body, weight: .regular))
+                        .foregroundStyle(HomePalette.secondaryText)
+                    
+                    Spacer()
 
-                DatePicker(
-                    "",
-                    selection: $newReminderTime,
-                    displayedComponents: .hourAndMinute
-                )
+                    DatePicker(
+                        "",
+                        selection: $newReminderTime,
+                        displayedComponents: .hourAndMinute
+                    )
+                }
                 .labelsHidden()
                 .datePickerStyle(.compact)
                 .tint(HomePalette.primaryBlue)
@@ -548,87 +559,14 @@ private extension View {
         self
             .listRowInsets(
                 EdgeInsets(
-                    top: 7,
+                    top: 8,
                     leading: 20,
-                    bottom: 7,
+                    bottom: 8,
                     trailing: 20
                 )
             )
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
-    }
-}
-
-private struct ReminderSwipeDeleteRow<Content: View>: View {
-    let content: Content
-    let onDelete: () -> Void
-
-    @State private var restingOffset: CGFloat = 0
-    @State private var dragOffset: CGFloat = 0
-
-    private let actionWidth: CGFloat = 86
-
-    private var currentOffset: CGFloat {
-        min(
-            0,
-            max(
-                -actionWidth,
-                restingOffset + dragOffset
-            )
-        )
-    }
-
-    init(
-        @ViewBuilder content: () -> Content,
-        onDelete: @escaping () -> Void
-    ) {
-        self.content = content()
-        self.onDelete = onDelete
-    }
-
-    var body: some View {
-        ZStack(alignment: .trailing) {
-            Button {
-                withAnimation(.snappy) {
-                    restingOffset = 0
-                    dragOffset = 0
-                }
-
-                onDelete()
-            } label: {
-                Image(systemName: "trash")
-                    .font(.system(.title3, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: actionWidth)
-                    .frame(maxHeight: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(Color.red)
-                    )
-            }
-            .buttonStyle(.plain)
-
-            content
-                .offset(x: currentOffset)
-                .gesture(
-                    DragGesture(minimumDistance: 18)
-                        .onChanged { value in
-                            guard abs(value.translation.width) > abs(value.translation.height) else {
-                                return
-                            }
-
-                            dragOffset = value.translation.width
-                        }
-                        .onEnded { _ in
-                            let shouldOpen = currentOffset < -actionWidth / 2
-
-                            withAnimation(.snappy) {
-                                restingOffset = shouldOpen ? -actionWidth : 0
-                                dragOffset = 0
-                            }
-                        }
-                )
-        }
     }
 }
 
