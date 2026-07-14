@@ -142,7 +142,7 @@ struct TrendsView: View {
     }
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             Text("Trends")
                 .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(HomePalette.primaryText)
@@ -154,7 +154,7 @@ struct TrendsView: View {
     }
 
     private var filterSection: some View {
-        HStack(spacing: 14) {
+        HStack {
             ForEach(TrendTimeFilter.allCases) { filter in
                 Button {
                     withAnimation(.snappy) {
@@ -162,20 +162,20 @@ struct TrendsView: View {
                     }
                 } label: {
                     Text(filter.rawValue)
-                        .font(.system(.headline, weight: .bold))
+                        .font(.system(.subheadline, weight: .semibold))
                         .foregroundStyle(
                             selectedFilter == filter
                             ? .white
                             : HomePalette.secondaryText
                         )
                         .frame(maxWidth: .infinity)
-                        .frame(height: 58)
+                        .frame(height: 35)
                         .background(
                             Capsule()
                                 .fill(
                                     selectedFilter == filter
                                     ? HomePalette.primaryBlue
-                                    : Color.white.opacity(0.35)
+                                    : Color(red: 0.90, green: 0.93, blue: 0.97)
                                 )
                         )
                 }
@@ -192,7 +192,7 @@ struct TrendsView: View {
             Text("Yellow dashed = normal thresholds (120/80 mmHg)")
                 .font(.system(.footnote, weight: .regular))
                 .foregroundStyle(HomePalette.tertiaryText)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 4)
         }
         .padding(.horizontal, 22)
