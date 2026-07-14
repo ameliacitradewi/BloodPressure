@@ -7,136 +7,631 @@ import SwiftUI
 import UserNotifications
 
 struct ReminderView: View {
-  @StateObject private var notificationService = NotificationService()
+    @StateObject private var notificationService = NotificationService()
 
-  @AppStorage(UserSettings.morningReminderEnabledKey) private var morningEnabled = false
-  @AppStorage(UserSettings.eveningReminderEnabledKey) private var eveningEnabled = false
-  @AppStorage(UserSettings.customReminderEnabledKey) private var customEnabled = false
+    @AppStorage("bp_reminders_json")
+    private var remindersJSON = ""
 
-  @AppStorage(UserSettings.morningReminderTimeKey) private var morningTimeInterval = UserSettings.defaultMorningTime().timeIntervalSince1970
-  @AppStorage(UserSettings.eveningReminderTimeKey) private var eveningTimeInterval = UserSettings.defaultEveningTime().timeIntervalSince1970
-  @AppStorage(UserSettings.customReminderTimeKey) private var customTimeInterval = UserSettings.defaultCustomTime().timeIntervalSince1970
+    @State private var reminders: [ReminderNotification] = []
 
-  @State private var showPermissionDenied = false
+    @State private var showPermissionDenied = false
+    @State private var showAddReminderForm = false
+    @State private var showMaxReminderAlert = false
 
-  private var morningTime: Binding<Date> {
-    timeBinding(for: $morningTimeInterval)
-  }
+    @State private var newReminderTime = Self.defaultTime(hour: 8)
+    @State private var newReminderTitle = ""
+    @State private var validationError: String?
 
-  private var eveningTime: Binding<Date> {
-    timeBinding(for: $eveningTimeInterval)
-  }
+    private let maxReminderCount = 10
+    private let maxTitleLength = 23
 
-  private var customTime: Binding<Date> {
-    timeBinding(for: $customTimeInterval)
-  }
+    private var canAddMoreReminders: Bool {
+        reminders.count < maxReminderCount
+    }
 
-  var body: some View {
-    Form {
-      if showPermissionDenied || notificationService.authorizationStatus == .denied {
-        Section {
-          PermissionDeniedView(
-            title: "Notifications Disabled",
-            message: "Please enable notifications in Settings to receive blood pressure reminders.",
-            systemImage: "bell.slash.fill"
-          )
-        }
-      }
+    private var canSubmitNewReminder: Bool {
+        !newReminderTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        canAddMoreReminders
+    }
 
-      Section("Morning Reminder") {
-        Toggle("Enable Morning Reminder", isOn: $morningEnabled)
-          .onChange(of: morningEnabled) { _, _ in
-            Task { await updateReminders() }
-          }
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                HomePalette.background
+                    .ignoresSafeArea()
 
-        if morningEnabled {
-          DatePicker("Time", selection: morningTime, displayedComponents: .hourAndMinute)
-            .onChange(of: morningTimeInterval) { _, _ in
-              Task { await updateReminders() }
+                ScrollView(showsIndicators: false) {
+                    LazyVStack(alignment: .leading, spacing: 20) {
+                        headerSection
+
+                        if showPermissionDenied ||
+                            notificationService.authorizationStatus == .denied {
+                            PermissionDeniedView(
+                                title: "Notifications Disabled",
+                                message: "Please enable notifications in Settings to receive blood pressure reminders.",
+                                systemImage: "bell.slash.fill"
+                            )
+                        }
+
+                        ForEach(reminders) { reminder in
+                            ReminderSwipeDeleteRow {
+                                reminderRow(reminder)
+                            } onDelete: {
+                                deleteReminder(reminder)
+                            }
+                        }
+
+                        if showAddReminderForm {
+                            addReminderForm
+                        } else {
+                            addReminderButton
+                        }
+
+                        infoCard
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 24)
+                    .padding(.bottom, 32)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
+            .task {
+                loadReminders()
+                await notificationService.refreshAuthorizationStatus()
+                showPermissionDenied = notificationService.authorizationStatus == .denied
+            }
+            .alert("Maximum Reminders", isPresented: $showMaxReminderAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("You can only create up to 10 reminders.")
             }
         }
-      }
+    }
 
-      Section("Evening Reminder") {
-        Toggle("Enable Evening Reminder", isOn: $eveningEnabled)
-          .onChange(of: eveningEnabled) { _, _ in
-            Task { await updateReminders() }
-          }
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Reminders")
+                .font(.system(.largeTitle, design: .serif).weight(.bold))
+                .foregroundStyle(HomePalette.primaryText)
 
-        if eveningEnabled {
-          DatePicker("Time", selection: eveningTime, displayedComponents: .hourAndMinute)
-            .onChange(of: eveningTimeInterval) { _, _ in
-              Task { await updateReminders() }
+            Text("Daily notifications to log your BP")
+                .font(.system(.body, weight: .regular))
+                .foregroundStyle(HomePalette.secondaryText)
+        }
+    }
+
+    private func reminderRow(
+        _ reminder: ReminderNotification
+    ) -> some View {
+        HStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(HomePalette.primaryBlue.opacity(0.10))
+
+                Image(systemName: "bell")
+                    .font(.system(.title3, weight: .regular))
+                    .foregroundStyle(HomePalette.primaryBlue)
+            }
+            .frame(width: 45, height: 45)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(Self.timeFormatter.string(from: reminder.time))
+                        .font(.system(.title, design: .monospaced).weight(.bold))
+                        .foregroundStyle(HomePalette.primaryText)
+
+                    Text(Self.periodFormatter.string(from: reminder.time))
+                        .font(.system(.title3, design: .monospaced).weight(.bold))
+                        .foregroundStyle(HomePalette.primaryText)
+                }
+
+                Text(reminder.title)
+                    .font(.system(.body, weight: .regular))
+                    .foregroundStyle(HomePalette.secondaryText)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Toggle(
+                "",
+                isOn: isReminderEnabledBinding(for: reminder)
+            )
+            .labelsHidden()
+            .tint(HomePalette.primaryBlue)
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 15)
+        .background(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(.white)
+                .shadow(
+                    color: .black.opacity(0.055),
+                    radius: 14,
+                    x: 0,
+                    y: 7
+                )
+        )
+    }
+
+    private var addReminderButton: some View {
+        Button {
+            guard canAddMoreReminders else {
+                showMaxReminderAlert = true
+                return
+            }
+
+            withAnimation(.snappy) {
+                showAddReminderForm = true
+                validationError = nil
+                newReminderTitle = ""
+                newReminderTime = Self.defaultTime(hour: 8)
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "plus")
+                    .font(.system(.headline, weight: .semibold))
+
+                Text("Add Reminder")
+                    .font(.system(.headline, weight: .bold))
+            }
+            .foregroundStyle(HomePalette.primaryBlue)
+            .frame(maxWidth: .infinity)
+            .frame(height: 60)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(
+                        HomePalette.tertiaryText.opacity(0.65),
+                        style: StrokeStyle(
+                            lineWidth: 2,
+                            dash: [
+                                6,
+                                5
+                            ]
+                        )
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var addReminderForm: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            Text("New Reminder")
+                .font(.system(.title3, weight: .bold))
+                .foregroundStyle(HomePalette.primaryText)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Time")
+                    .font(.system(.body, weight: .regular))
+                    .foregroundStyle(HomePalette.secondaryText)
+
+                DatePicker(
+                    "",
+                    selection: $newReminderTime,
+                    displayedComponents: .hourAndMinute
+                )
+                .labelsHidden()
+                .datePickerStyle(.compact)
+                .tint(HomePalette.primaryBlue)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .frame(height: 66)
+                .background(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .fill(HomePalette.background.opacity(0.70))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                .stroke(HomePalette.tertiaryText.opacity(0.35), lineWidth: 1)
+                        }
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Label")
+                        .font(.system(.body, weight: .regular))
+                        .foregroundStyle(HomePalette.secondaryText)
+
+                    Spacer()
+
+                    Text("\(newReminderTitle.count)/\(maxTitleLength)")
+                        .font(.caption)
+                        .foregroundStyle(HomePalette.tertiaryText)
+                }
+
+                TextField(
+                    "Morning check",
+                    text: $newReminderTitle
+                )
+                .font(.system(.body, weight: .regular))
+                .foregroundStyle(HomePalette.primaryText)
+                .padding(.horizontal, 20)
+                .frame(height: 66)
+                .background(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .fill(HomePalette.background.opacity(0.70))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                .stroke(HomePalette.tertiaryText.opacity(0.35), lineWidth: 1)
+                        }
+                )
+                .onChange(of: newReminderTitle) { _, newValue in
+                    let sanitized = sanitizedTitle(from: newValue)
+
+                    if sanitized != newValue {
+                        newReminderTitle = sanitized
+                    }
+                }
+
+                if let validationError {
+                    Text(validationError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    withAnimation(.snappy) {
+                        cancelAddReminder()
+                    }
+                } label: {
+                    Text("Cancel")
+                        .font(.system(.headline, weight: .bold))
+                        .foregroundStyle(HomePalette.secondaryText)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 58)
+                        .background(
+                            Capsule()
+                                .fill(HomePalette.background)
+                        )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    addReminder()
+                } label: {
+                    Text("Add")
+                        .font(.system(.headline, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 58)
+                        .background(
+                            Capsule()
+                                .fill(
+                                    canSubmitNewReminder
+                                    ? HomePalette.primaryBlue
+                                    : HomePalette.tertiaryText.opacity(0.45)
+                                )
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSubmitNewReminder)
             }
         }
-      }
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(.white)
+                .shadow(
+                    color: .black.opacity(0.055),
+                    radius: 14,
+                    x: 0,
+                    y: 7
+                )
+        )
+    }
 
-      Section("Custom Reminder") {
-        Toggle("Enable Custom Reminder", isOn: $customEnabled)
-          .onChange(of: customEnabled) { _, _ in
-            Task { await updateReminders() }
-          }
+    private var infoCard: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: "bell")
+                .font(.system(.headline, weight: .medium))
+                .foregroundStyle(HomePalette.primaryBlue)
+                .padding(.top, 2)
 
-        if customEnabled {
-          DatePicker("Time", selection: customTime, displayedComponents: .hourAndMinute)
-            .onChange(of: customTimeInterval) { _, _ in
-              Task { await updateReminders() }
+            Text("Reminders help you build a consistent tracking habit. For accurate results, measure at the same time each day, after 5 minutes of rest.")
+                .font(.system(.caption, weight: .regular))
+                .foregroundStyle(HomePalette.primaryBlue)
+                .lineSpacing(6)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(HomePalette.primaryBlue.opacity(0.08))
+        )
+    }
+
+    private func isReminderEnabledBinding(
+        for reminder: ReminderNotification
+    ) -> Binding<Bool> {
+        Binding {
+            reminders.first(where: { $0.id == reminder.id })?.isEnabled ?? false
+        } set: { newValue in
+            guard let index = reminders.firstIndex(where: { $0.id == reminder.id }) else {
+                return
+            }
+
+            reminders[index].isEnabled = newValue
+
+            Task {
+                await saveAndScheduleReminders()
             }
         }
-      }
-
-      Section {
-        Text("Reminders use native iOS notifications. You will be asked for permission when enabling your first reminder.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-      }
-    }
-    .navigationTitle("Reminders")
-    .task {
-      await notificationService.refreshAuthorizationStatus()
-      showPermissionDenied = notificationService.authorizationStatus == .denied
-    }
-  }
-
-  private func timeBinding(for storage: Binding<TimeInterval>) -> Binding<Date> {
-    Binding(
-      get: { Date(timeIntervalSince1970: storage.wrappedValue) },
-      set: { storage.wrappedValue = $0.timeIntervalSince1970 }
-    )
-  }
-
-  private func updateReminders() async {
-    let needsPermission = morningEnabled || eveningEnabled || customEnabled
-
-    if needsPermission && notificationService.authorizationStatus == .notDetermined {
-      let granted = await notificationService.requestPermission()
-      if !granted {
-        showPermissionDenied = true
-        morningEnabled = false
-        eveningEnabled = false
-        customEnabled = false
-        return
-      }
     }
 
-    if notificationService.authorizationStatus == .denied {
-      showPermissionDenied = true
-      return
+    private func addReminder() {
+        guard canAddMoreReminders else {
+            showMaxReminderAlert = true
+            return
+        }
+
+        let title = sanitizedTitle(from: newReminderTitle)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !title.isEmpty else {
+            validationError = "Please enter a reminder label."
+            return
+        }
+
+        validationError = nil
+
+        let reminder = ReminderNotification(
+            title: title,
+            time: newReminderTime,
+            isEnabled: true
+        )
+
+        reminders.append(reminder)
+
+        withAnimation(.snappy) {
+            showAddReminderForm = false
+            newReminderTitle = ""
+            newReminderTime = Self.defaultTime(hour: 8)
+        }
+
+        Task {
+            await saveAndScheduleReminders()
+        }
     }
 
-    await notificationService.scheduleReminders(
-      morningEnabled: morningEnabled,
-      morningTime: Date(timeIntervalSince1970: morningTimeInterval),
-      eveningEnabled: eveningEnabled,
-      eveningTime: Date(timeIntervalSince1970: eveningTimeInterval),
-      customEnabled: customEnabled,
-      customTime: Date(timeIntervalSince1970: customTimeInterval)
-    )
-  }
+    private func cancelAddReminder() {
+        showAddReminderForm = false
+        validationError = nil
+        newReminderTitle = ""
+        newReminderTime = Self.defaultTime(hour: 8)
+    }
+
+    private func deleteReminder(
+        _ reminder: ReminderNotification
+    ) {
+        reminders.removeAll { item in
+            item.id == reminder.id
+        }
+
+        Task {
+            await saveAndScheduleReminders()
+        }
+    }
+
+    private func saveAndScheduleReminders() async {
+        saveReminders()
+
+        let needsPermission = reminders.contains { reminder in
+            reminder.isEnabled
+        }
+
+        if needsPermission && notificationService.authorizationStatus == .notDetermined {
+            let granted = await notificationService.requestPermission()
+
+            if !granted {
+                disableAllReminders()
+                showPermissionDenied = true
+                saveReminders()
+                await notificationService.scheduleReminders(reminders)
+                return
+            }
+        }
+
+        if notificationService.authorizationStatus == .denied {
+            disableAllReminders()
+            showPermissionDenied = true
+            saveReminders()
+            await notificationService.scheduleReminders(reminders)
+            return
+        }
+
+        showPermissionDenied = false
+
+        await notificationService.scheduleReminders(reminders)
+    }
+
+    private func disableAllReminders() {
+        reminders = reminders.map { reminder in
+            var updatedReminder = reminder
+            updatedReminder.isEnabled = false
+            return updatedReminder
+        }
+    }
+
+    private func loadReminders() {
+        guard let data = remindersJSON.data(using: .utf8),
+              let decodedReminders = try? JSONDecoder().decode(
+                [ReminderNotification].self,
+                from: data
+              )
+        else {
+            reminders = Self.defaultReminders
+            saveReminders()
+            return
+        }
+
+        reminders = decodedReminders
+    }
+
+    private func saveReminders() {
+        guard let data = try? JSONEncoder().encode(reminders),
+              let encodedString = String(data: data, encoding: .utf8)
+        else {
+            return
+        }
+
+        remindersJSON = encodedString
+    }
+
+    private func sanitizedTitle(
+        from value: String
+    ) -> String {
+        let allowedCharacters = CharacterSet.alphanumerics
+            .union(.whitespaces)
+
+        let filtered = value.unicodeScalars.filter { scalar in
+            allowedCharacters.contains(scalar)
+        }
+
+        let joined = String(String.UnicodeScalarView(filtered))
+
+        let normalized = joined.replacingOccurrences(
+            of: "\\s+",
+            with: " ",
+            options: .regularExpression
+        )
+
+        return String(normalized.prefix(maxTitleLength))
+    }
+
+    private static var defaultReminders: [ReminderNotification] {
+        [
+            ReminderNotification(
+                title: "Morning check",
+                time: defaultTime(hour: 8),
+                isEnabled: false
+            ),
+            ReminderNotification(
+                title: "Evening check",
+                time: defaultTime(hour: 20),
+                isEnabled: false
+            )
+        ]
+    }
+
+    private static func defaultTime(
+        hour: Int,
+        minute: Int = 0
+    ) -> Date {
+        Calendar.current.date(
+            bySettingHour: hour,
+            minute: minute,
+            second: 0,
+            of: Date()
+        ) ?? Date()
+    }
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm"
+        return formatter
+    }()
+
+    private static let periodFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "a"
+        return formatter
+    }()
+}
+
+private extension View {
+    func listRowStyle() -> some View {
+        self
+            .listRowInsets(
+                EdgeInsets(
+                    top: 7,
+                    leading: 20,
+                    bottom: 7,
+                    trailing: 20
+                )
+            )
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+    }
+}
+
+private struct ReminderSwipeDeleteRow<Content: View>: View {
+    let content: Content
+    let onDelete: () -> Void
+
+    @State private var restingOffset: CGFloat = 0
+    @State private var dragOffset: CGFloat = 0
+
+    private let actionWidth: CGFloat = 86
+
+    private var currentOffset: CGFloat {
+        min(
+            0,
+            max(
+                -actionWidth,
+                restingOffset + dragOffset
+            )
+        )
+    }
+
+    init(
+        @ViewBuilder content: () -> Content,
+        onDelete: @escaping () -> Void
+    ) {
+        self.content = content()
+        self.onDelete = onDelete
+    }
+
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            Button {
+                withAnimation(.snappy) {
+                    restingOffset = 0
+                    dragOffset = 0
+                }
+
+                onDelete()
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(.title3, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: actionWidth)
+                    .frame(maxHeight: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(Color.red)
+                    )
+            }
+            .buttonStyle(.plain)
+
+            content
+                .offset(x: currentOffset)
+                .gesture(
+                    DragGesture(minimumDistance: 18)
+                        .onChanged { value in
+                            guard abs(value.translation.width) > abs(value.translation.height) else {
+                                return
+                            }
+
+                            dragOffset = value.translation.width
+                        }
+                        .onEnded { _ in
+                            let shouldOpen = currentOffset < -actionWidth / 2
+
+                            withAnimation(.snappy) {
+                                restingOffset = shouldOpen ? -actionWidth : 0
+                                dragOffset = 0
+                            }
+                        }
+                )
+        }
+    }
 }
 
 #Preview {
-  NavigationStack {
     ReminderView()
-  }
 }
