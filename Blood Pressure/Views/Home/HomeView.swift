@@ -525,7 +525,7 @@ private struct StatusPill: View {
 
 // MARK: Average Card
 
-private struct AverageMetricCard: View {
+struct AverageMetricCard: View {
     let title: String
     let value: Int?
     let unit: String
