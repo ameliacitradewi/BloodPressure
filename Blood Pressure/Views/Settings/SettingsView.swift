@@ -13,8 +13,7 @@ struct SettingsView: View {
     @AppStorage(UserSettings.userNameKey)
     private var userName = ""
 
-    @State private var exportURL: URL?
-    @State private var showShareSheet = false
+    @State private var exportFile: ExportFile?
     @State private var showExportError = false
 
     var body: some View {
@@ -36,10 +35,8 @@ struct SettingsView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
-            .sheet(isPresented: $showShareSheet) {
-                if let exportURL {
-                    ShareSheet(items: [exportURL])
-                }
+            .sheet(item: $exportFile) { file in
+                ShareSheet(items: [file.url])
             }
             .alert("Export Failed", isPresented: $showExportError) {
                 Button("OK", role: .cancel) { }
@@ -145,9 +142,13 @@ struct SettingsView: View {
             return
         }
 
-        exportURL = url
-        showShareSheet = true
+        exportFile = ExportFile(url: url)
     }
+}
+
+private struct ExportFile: Identifiable {
+    let id = UUID()
+    let url: URL
 }
 
 struct ShareSheet: UIViewControllerRepresentable {
